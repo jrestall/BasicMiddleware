@@ -19,7 +19,7 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
     public class HttpsRedirectionMiddlewareTests
     {
         [Fact]
-        public async Task SetOptions_DefaultsSetCorrectly()
+        public async Task SetOptions_NotEnabledByDefault()
         {
             var builder = new WebHostBuilder()
                 .Configure(app =>
@@ -38,15 +38,13 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
 
             var response = await client.SendAsync(request);
 
-            Assert.Equal(HttpStatusCode.RedirectKeepVerb, response.StatusCode);
-            Assert.Equal("https://localhost/", response.Headers.Location.ToString());
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Theory]
-        [InlineData(301, null, "https://localhost/")]
-        [InlineData(302, null, "https://localhost/")]
-        [InlineData(307, null, "https://localhost/")]
-        [InlineData(308, null, "https://localhost/")]
+        [InlineData(302, 5001, "https://localhost:5001/")]
+        [InlineData(307, 1, "https://localhost:1/")]
+        [InlineData(308, 3449, "https://localhost:3449/")]
         [InlineData(301, 5050, "https://localhost:5050/")]
         [InlineData(301, 443, "https://localhost/")]
         public async Task SetOptions_SetStatusCodeHttpsPort(int statusCode, int? httpsPort, string expected)
@@ -82,10 +80,9 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
         }
 
         [Theory]
-        [InlineData(301, null, "https://localhost/")]
-        [InlineData(302, null, "https://localhost/")]
-        [InlineData(307, null, "https://localhost/")]
-        [InlineData(308, null, "https://localhost/")]
+        [InlineData(302, 5001, "https://localhost:5001/")]
+        [InlineData(307, 1, "https://localhost:1/")]
+        [InlineData(308, 3449, "https://localhost:3449/")]
         [InlineData(301, 5050, "https://localhost:5050/")]
         [InlineData(301, 443, "https://localhost/")]
         public async Task SetOptionsThroughHelperMethod_SetStatusCodeAndHttpsPort(int statusCode, int? httpsPort, string expectedUrl)
@@ -120,17 +117,16 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
         }
 
         [Theory]
-        [InlineData(null, null, null, "https://localhost/")]
         [InlineData(null, null, "https://localhost:4444/", "https://localhost:4444/")]
         [InlineData(null, null, "https://localhost:443/", "https://localhost/")]
-        [InlineData(null, null, "http://localhost:5044/", "https://localhost/")]
         [InlineData(null, null, "https://localhost/", "https://localhost/")]
         [InlineData(null, "5000", "https://localhost:4444/", "https://localhost:5000/")]
         [InlineData(null, "443", "https://localhost:4444/", "https://localhost/")]
         [InlineData(443, "5000", "https://localhost:4444/", "https://localhost/")]
         [InlineData(4000, "5000", "https://localhost:4444/", "https://localhost:4000/")]
         [InlineData(5000, null, "https://localhost:4444/", "https://localhost:5000/")]
-        public async Task SetHttpsPortEnvironmentVariableAndServerFeature_ReturnsCorrectStatusCodeOnResponse(int? optionsHttpsPort, string configHttpsPort, string serverAddressFeatureUrl, string expectedUrl)
+        public async Task SetHttpsPortEnvironmentVariableAndServerFeature_ReturnsCorrectStatusCodeOnResponse(
+            int? optionsHttpsPort, string configHttpsPort, string serverAddressFeatureUrl, string expectedUrl)
         {
             var builder = new WebHostBuilder()
                .ConfigureServices(services =>
@@ -197,7 +193,7 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
         }
 
         [Fact]
-        public async Task SetServerAddressesFeature_MultipleHttpsAddresses_ThrowInMiddleware()
+        public async Task SetServerAddressesFeature_MultipleHttpsAddresses_LogsAndFailsToRedirect()
         {
             var builder = new WebHostBuilder()
                .Configure(app =>
@@ -220,7 +216,8 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
 
             var request = new HttpRequestMessage(HttpMethod.Get, "");
 
-            await Assert.ThrowsAsync<ArgumentException>(async () => await client.SendAsync(request));
+            var response = await client.SendAsync(request);
+            Assert.Equal(200, (int)response.StatusCode);
         }
 
         [Fact]
@@ -253,7 +250,7 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
         }
 
         [Fact]
-        public async Task NoServerAddressFeature_DoesNotThrow_DefaultsTo443()
+        public async Task NoServerAddressFeature_DoesNotThrow_DoesNotRedirect()
         {
             var builder = new WebHostBuilder()
                 .ConfigureServices(services =>
@@ -275,8 +272,7 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
             var client = server.CreateClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "");
             var response = await client.SendAsync(request);
-
-            Assert.Equal("https://localhost/", response.Headers.Location.ToString());
+            Assert.Equal(200, (int)response.StatusCode);
         }
 
         [Fact]
@@ -305,8 +301,7 @@ namespace Microsoft.AspNetCore.HttpsPolicy.Tests
             var client = server.CreateClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "");
             var response = await client.SendAsync(request);
-
-            Assert.Equal("https://localhost/", response.Headers.Location.ToString());
+            Assert.Equal(200, (int)response.StatusCode);
         }
     }
 }
