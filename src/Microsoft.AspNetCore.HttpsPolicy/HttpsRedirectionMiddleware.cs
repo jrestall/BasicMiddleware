@@ -111,26 +111,26 @@ namespace Microsoft.AspNetCore.HttpsPolicy
             // 3. IServerAddressesFeature
             // 4. Fail if not set
 
+            port = -1;
+
             if (_portEvaluated)
             {
-                port = _httpsPort ?? -1;
+                port = _httpsPort ?? port;
                 return _httpsPort.HasValue;
             }
+            _portEvaluated = true;
 
             _httpsPort = _config.GetValue<int?>("HTTPS_PORT");
             if (_httpsPort.HasValue)
             {
                 _logger.LogDebug($"Https port '{_httpsPort}' loaded from configuration.");
                 port = _httpsPort.Value;
-                _portEvaluated = true;
                 return true;
             }
 
             if (_serverAddressesFeature == null)
             {
-                _logger.LogWarning("Failed to determin the https port for redirect.");
-                port = -1;
-                _portEvaluated = true;
+                _logger.LogWarning("Failed to determine the https port for redirect.");
                 return false;
             }
 
@@ -146,8 +146,6 @@ namespace Microsoft.AspNetCore.HttpsPolicy
                         _logger.LogWarning("Cannot determine the https port from IServerAddressesFeature, multiple values were found. " +
                             "Please set the desired port explicitly on HttpsRedirectionOptions.HttpsPort.");
 
-                        _portEvaluated = true;
-                        port = -1;
                         return false;
                     }
                     else
@@ -162,15 +160,11 @@ namespace Microsoft.AspNetCore.HttpsPolicy
                 _logger.LogDebug($"Https port '{httpsPort}' discovered from server endpoints.");
                 _httpsPort = httpsPort;
                 port = _httpsPort.Value;
-            }
-            else
-            {
-                _logger.LogWarning("Failed to determin the https port for redirect.");
-                port = -1;
+                return true;
             }
 
-            _portEvaluated = true;
-            return _httpsPort.HasValue;
+            _logger.LogWarning("Failed to determine the https port for redirect.");
+            return false;
         }
     }
 }
