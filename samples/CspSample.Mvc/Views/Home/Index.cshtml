@@ -1,0 +1,24 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+<html>
+<head>
+
+</head>
+<body>
+<div>
+    <p>@ViewData["Message"]</p>
+    <p>Check the page source for nonce and SRI.</p>
+    
+    <script asp-add-nonce="true">
+
+    </script>
+    <style asp-add-nonce="true">
+        p { color: #0000ff; }
+    </style>
+    <object type="application/testplugintype"></object>
+</div>
+</body>
+</html>
