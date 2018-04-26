@@ -13,7 +13,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
     public class CspMiddleware
     {
         private readonly RequestDelegate _next;
-		private readonly ContentSecurityPolicy _policy;
+        private readonly ContentSecurityPolicy _policy;
         private readonly string _policyName;
 
         /// <summary>

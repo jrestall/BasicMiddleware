@@ -35,22 +35,6 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         private readonly ContentSecurityPolicy _policy = new ContentSecurityPolicy();
 
         /// <summary>
-        /// Creates a new instance of the <see cref="ContentSecurityPolicyBuilder"/>.
-        /// </summary>
-        public ContentSecurityPolicyBuilder()
-        {
-        }
-
-        /// <summary>
-        /// Creates a new instance of the <see cref="ContentSecurityPolicyBuilder"/>.
-        /// </summary>
-        /// <param name="policy">The policy which will be used to initialize the builder.</param>
-        public ContentSecurityPolicyBuilder(ContentSecurityPolicy policy)
-        {
-            Combine(policy);
-        }
-
-        /// <summary>
         /// Adds a default-src directive to the <see cref="ContentSecurityPolicy"/>.
         /// </summary>
         /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
@@ -299,21 +283,6 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         public ContentSecurityPolicy Build()
         {
             return _policy;
-        }
-
-        /// <summary>
-        /// Combines the given <paramref name="policy"/> to the existing properties in the builder.
-        /// </summary>
-        /// <param name="policy">The policy which needs to be combined.</param>
-        /// <returns>The current policy builder.</returns>
-        private void Combine(ContentSecurityPolicy policy)
-        {
-            if (policy == null)
-            {
-                throw new ArgumentNullException(nameof(policy));
-            }
-
-            // TODO: Combine
         }
     }
 }

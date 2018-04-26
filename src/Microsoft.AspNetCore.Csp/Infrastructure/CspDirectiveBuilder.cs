@@ -6,7 +6,7 @@ using System;
 namespace Microsoft.AspNetCore.Csp.Infrastructure
 {
     /// <summary>
-    /// Exposes methods to build a policy.
+    /// Exposes methods to build a policy directive.
     /// </summary>
     public class CspDirectiveBuilder
     {

@@ -150,10 +150,13 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         public override string ToString()
         {
             var builder = new StringBuilder();
-            foreach (var directive in Directives)
-            {
-                builder.Append(directive);
-            }
+            builder.Append("Directives: {");
+            builder.Append(string.Join(",", Directives.Values));
+            builder.Append("}");
+            builder.Append(", ReportOnly: ");
+            builder.Append(ReportOnly);
+            builder.Append(", DefaultHashAlgorithms: ");
+            builder.Append(DefaultHashAlgorithms);
             return builder.ToString();
         }
     }

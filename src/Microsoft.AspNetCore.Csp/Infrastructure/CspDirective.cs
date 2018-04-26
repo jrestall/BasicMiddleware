@@ -80,7 +80,14 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         public override string ToString()
         {
             var builder = new StringBuilder();
-            // TODO: ToString()
+            builder.Append("Value: ");
+            builder.Append(Value);
+            builder.Append(", SupportsMetaTag: ");
+            builder.Append(SupportsMetaTag);
+            builder.Append(", SupportsReportHeader: ");
+            builder.Append(SupportsReportHeader);
+            builder.Append(", AddNonce: ");
+            builder.Append(AddNonce);
             return builder.ToString();
         }
 
