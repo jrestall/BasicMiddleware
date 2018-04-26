@@ -1,4 +1,5 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Csp.Infrastructure;
+@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -12,10 +13,10 @@
     <p>@ViewData["Message"]</p>
     <p>Check the page source for nonce and SRI.</p>
     
-    <script asp-add-nonce="true">
-
+    <script asp-add-nonce="true" asp-generate-hash="true" asp-generate-hash-algorithms="HashAlgorithms.SHA256 | HashAlgorithms.SHA512" >
+        console.log("I'm a script that will be hashed dynamically.");
     </script>
-    <style asp-add-nonce="true">
+    <style asp-add-nonce="true" asp-generate-hash="true">
         p { color: #0000ff; }
     </style>
     <object type="application/testplugintype"></object>

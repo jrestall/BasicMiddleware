@@ -42,7 +42,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             _hashProvider = hashProvider;
         }
 
-        // This filter must run after the ScriptTagHelper as it generates hashes based on the script tags markup.
+        // This tag helper must run after the ScriptTagHelper as it generates hashes based on the script tags markup.
         public override int Order
         {
             get  {  return -1000 + 100;   }

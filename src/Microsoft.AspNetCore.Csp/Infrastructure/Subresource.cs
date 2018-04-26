@@ -9,6 +9,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
     public enum Subresource
     {
         Script,
+
         Style
     }
 }

@@ -14,7 +14,7 @@ namespace Microsoft.Extensions.DependencyInjection
     public static class MvcCspMvcBuilderExtensions
     {
         /// <summary>
-        /// Adds the 'application/csp-report' media type to the input formatters so that csp reports can be received.
+        /// Adds the 'application/csp-report' media type to the JSON input formatter so that csp reports can be received.
         /// </summary>
         /// <param name="builder">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
