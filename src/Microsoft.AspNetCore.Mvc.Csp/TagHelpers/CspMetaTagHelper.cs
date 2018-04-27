@@ -1,9 +1,9 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Csp.Infrastructure;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Csp.Internal;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -55,15 +55,14 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
                 return;
             }
 
+            // TODO: Support outputting multiple meta tags/policies.
+            // TODO: Also need to support outputting hashes that are added in later tag helpers.
             var policy = await _policyProvider.GetActiveMainPolicyAsync(ViewContext.HttpContext);
-            //TODO: Support outputting multiple meta tags.
-            //foreach (var policy in policies)
-            //{
-                var header = _cspHeaderBuilder.GetHeader(ViewContext.HttpContext, policy, supportMetaTag: true);
+            
+            var header = _cspHeaderBuilder.GetHeader(ViewContext.HttpContext, policy, supportMetaTag: true);
 
-                output.Attributes.SetAttribute("http-equiv", header.Name);
-                output.Attributes.SetAttribute(ContentAttributeName, header.Value);
-            //}     
+            output.Attributes.SetAttribute("http-equiv", header.Name);
+            output.Attributes.SetAttribute(ContentAttributeName, new HtmlString(header.Value));     
         }
     }
 }

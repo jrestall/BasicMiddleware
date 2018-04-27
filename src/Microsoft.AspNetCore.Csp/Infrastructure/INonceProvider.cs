@@ -13,8 +13,8 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <summary>
         /// Gets a base64 encoded nonce for the curent request.
         /// </summary>
-        /// <param name="context">The <see cref="HttpContext"/> associated with the request.</param>
+        /// <param name="httpContext">The <see cref="HttpContext"/> associated with the request.</param>
         /// <returns>The base64 encoded nonce for the current request.</returns>
-        string GetNonce(HttpContext context);
+        string GetNonce(HttpContext httpContext);
     }
 }

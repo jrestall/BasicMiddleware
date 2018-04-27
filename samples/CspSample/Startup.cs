@@ -36,7 +36,7 @@ namespace CspSample
                 );
 
                 options.AddPolicy("MyBlogPolicy", policy =>
-                    policy.AddDefaultSrc(src => src.AllowNone().AddNonce())
+                    policy.AddDefaultSrc(src => src.AllowSelf().AddNonce())
                 );
             });
         }

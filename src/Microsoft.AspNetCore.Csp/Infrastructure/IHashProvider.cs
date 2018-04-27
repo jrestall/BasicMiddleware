@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace Microsoft.AspNetCore.Csp.Infrastructure
 {
@@ -19,15 +20,16 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="hashAlgorithms">The hash algorithms used to hash the content.</param>
         /// <returns>A collection of hashes, one for each hash algorithm specified.</returns>
         /// <remarks>Each computed hash is prefixed with the algorithm e.g. sha512-{hash} for the SHA512 algorithm.</remarks>
-        Task<IEnumerable<string>> GetContentHashesAsync(string cacheKey, string content, HashAlgorithms hashAlgorithms);
+        Task<IList<string>> GetContentHashesAsync(string cacheKey, string content, HashAlgorithms hashAlgorithms);
 
         /// <summary>
         /// Provides the computed hashes of a given local file.
         /// </summary>
+        /// <param name="httpContext">The <see cref="HttpContext"/> associated with the request.</param>
         /// <param name="path">The path to the local file to be hashed.</param>
         /// <param name="hashAlgorithms">The hash algorithms used to hash the content.</param>
         /// <returns>A collection of hashes, one for each hash algorithm specified.</returns>
         /// <remarks>Each computed hash is prefixed with the algorithm e.g. sha512-{hash} for the SHA512 algorithm.</remarks>
-        Task<IEnumerable<string>> GetFileHashesAsync(string path, HashAlgorithms hashAlgorithms);
+        Task<IList<string>> GetFileHashesAsync(HttpContext httpContext, string path, HashAlgorithms hashAlgorithms);
     }
 }

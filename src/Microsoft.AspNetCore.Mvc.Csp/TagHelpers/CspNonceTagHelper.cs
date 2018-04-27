@@ -3,6 +3,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Csp.Infrastructure;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Csp.Internal;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -57,7 +58,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             directive.AddNonce = true;
 
             var nonce = _nonceProvider.GetNonce(ViewContext.HttpContext);
-            output.Attributes.SetAttribute("nonce", nonce);
+            output.Attributes.SetAttribute("nonce", new HtmlString(nonce));
         }
     }
 }

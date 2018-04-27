@@ -54,7 +54,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         public string Value => _directiveValue.ToString();
 
         /// <summary>
-        /// Adds the given sources to the directive value.
+        /// Adds the given source values to the directive.
         /// </summary>
         /// <param name="values">The sources to be added.</param>
         /// <remarks>Directive values should only contain whitespace and visible characters, excluding ";" and ",".</remarks>
@@ -65,14 +65,28 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
                 throw new ArgumentNullException(nameof(values));
             }
 
+            if (values.Length == 0)
+            {
+                return;
+            }
+
             var separator = " ";
             if (_directiveValue.Length == 0) separator = string.Empty;
 
             _directiveValue.Append(separator + string.Join(" ", values));
         }
 
+        /// <summary>
+        /// Adds the given source values to the directive and encloses each in single quotes e.g. 'sha512-12345'.
+        /// </summary>
+        /// <param name="values">The values to be added.</param>
         public void AppendQuoted(params string[] values)
         {
+            if (values == null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
             foreach (var value in values)
             {
                 Append($"'{value}'");

@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Csp.Infrastructure;
@@ -19,6 +18,9 @@ namespace Microsoft.AspNetCore.Mvc.Csp
     /// </summary>
     public class CspActionFilter : ICspActionFilter
     {
+        // Internal for unit testing
+        internal static readonly object CspFilterContextKey = new object();
+
         private readonly IActivePoliciesProvider _policyProvider;
         private readonly ICspHeaderBuilder _cspHeaderBuilder;
         private readonly ILogger _logger;
@@ -100,28 +102,60 @@ namespace Microsoft.AspNetCore.Mvc.Csp
 
             if (!context.HttpContext.Response.HasStarted)
             {
-                context.HttpContext.Response.OnStarting(state =>
+                if (!context.HttpContext.Items.ContainsKey(CspFilterContextKey))
+                {
+                    var cspSendHeadersContext = new CspSendHeadersContext
                     {
-                        var httpContext = (HttpContext) state;
+                        HeaderBuilder = _cspHeaderBuilder,
+                        PolicyProvider = _policyProvider,
+                    };
+                    context.HttpContext.Items.Add(CspFilterContextKey, cspSendHeadersContext);
+                }
 
-                        var policies = httpContext.Items[nameof(DefaultActivePoliciesProvider)] as IEnumerable<ContentSecurityPolicy>;
+                // Register a callback before the final response headers get sent
+                // so that we can add the content security policy headers.
+                context.HttpContext.Response.OnStarting(async state =>
+                    {
+                        var httpContext = (HttpContext)state;
+
+                        var sendHeadersContext = GetSendHeadersContext(httpContext);
+                        if (sendHeadersContext == null)
+                        {
+                            return;
+                        }
+
+                        var policies = await sendHeadersContext.PolicyProvider.GetActivePoliciesAsync(httpContext);
                         if (policies == null)
                         {
-                            return Task.CompletedTask;
+                            return;
                         }
 
                         foreach (var policy in policies)
                         {
-                            var header = _cspHeaderBuilder.GetHeader(context.HttpContext, policy);
-                            context.HttpContext.Response.Headers.Append(header.Name, header.Value);
+                            var header = sendHeadersContext.HeaderBuilder.GetHeader(httpContext, policy);
+                            httpContext.Response.Headers.Append(header.Name, header.Value);
                         }
-
-                        return Task.CompletedTask;
                     },
                     state: context.HttpContext);
             }
 
             await next();
+        }
+
+        private CspSendHeadersContext GetSendHeadersContext(HttpContext httpContext)
+        {
+            CspSendHeadersContext sendHeadersContext = null;
+            if (httpContext.Items.TryGetValue(CspFilterContextKey, out var value))
+            {
+                sendHeadersContext = (CspSendHeadersContext)value;
+            }
+            return sendHeadersContext;
+        }
+
+        internal class CspSendHeadersContext
+        {
+            public ICspHeaderBuilder HeaderBuilder { get; set; }
+            public IActivePoliciesProvider PolicyProvider { get; set; }
         }
     }
 }

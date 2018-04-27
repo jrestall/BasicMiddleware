@@ -3,7 +3,9 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Csp.Internal;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.AspNetCore.Csp.Infrastructure
 {
@@ -15,12 +17,14 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         private readonly RequestDelegate _next;
         private readonly ContentSecurityPolicy _policy;
         private readonly string _policyName;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// Instantiates a new <see cref="CspMiddleware"/>.
         /// </summary>
         /// <param name="next">The next middleware in the pipeline.</param>
-        public CspMiddleware(RequestDelegate next) : this(next, policyName: null)
+        /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>
+        public CspMiddleware(RequestDelegate next, ILoggerFactory loggerFactory) : this(next, policyName: null, loggerFactory)
         {
         }
 
@@ -29,7 +33,8 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// </summary>
         /// <param name="next">The next middleware in the pipeline.</param>
         /// <param name="policyName">An optional name of the policy to be fetched.</param>
-        public CspMiddleware(RequestDelegate next, string policyName)
+        /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>
+        public CspMiddleware(RequestDelegate next, string policyName, ILoggerFactory loggerFactory)
         {
             if (next == null)
             {
@@ -38,16 +43,16 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
             _next = next;
             _policyName = policyName;
+            _logger = loggerFactory?.CreateLogger<CspHeaderBuilder>();
         }
 
         /// <summary>
         /// Instantiates a new <see cref="CspMiddleware"/>.
         /// </summary>
         /// <param name="next">The next middleware in the pipeline.</param>
-		/// <param name="policy">An instance of the <see cref="ContentSecurityPolicy"/> which can be applied.</param>
-        public CspMiddleware(
-           RequestDelegate next,
-           ContentSecurityPolicy policy)
+        /// <param name="policy">An instance of the <see cref="ContentSecurityPolicy"/> which can be applied.</param>
+        /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>
+        public CspMiddleware(RequestDelegate next, ContentSecurityPolicy policy, ILoggerFactory loggerFactory)
         {
             if (next == null)
             {
@@ -61,6 +66,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
             _next = next;
             _policy = policy;
+            _logger = loggerFactory?.CreateLogger<CspHeaderBuilder>();
         }
 
         /// <summary>
@@ -87,6 +93,8 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
                 var header = cspHeaderBuilder.GetHeader(httpContext, policy);
 
                 httpContext.Response.Headers.Append(header.Name, header.Value);
+
+                _logger?.PolicySuccess();
             }
 
             await _next(httpContext);

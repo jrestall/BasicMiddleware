@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.FileProviders;
@@ -16,24 +17,21 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
     /// <inheritdoc />
     public class DefaultHashProvider : IHashProvider
     {
-        private readonly IFileProvider _fileProvider;
+        private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IMemoryCache _cache;
-        private readonly PathString _requestPathBase;
 
         /// <summary>
         /// Creates a new instance of <see cref="DefaultHashProvider"/>.
         /// </summary>
-        /// <param name="fileProvider">The file provider to get and watch files.</param>
+        /// <param name="hostingEnvironment">The current hosting environment.</param>
         /// <param name="cache"><see cref="IMemoryCache"/> where the file and inline script hashes are cached.</param>
-        /// <param name="requestPathBase">The base path for the current HTTP request.</param>
         public DefaultHashProvider(
-            IFileProvider fileProvider,
-            IMemoryCache cache,
-            PathString requestPathBase)
+            IHostingEnvironment hostingEnvironment,
+            IMemoryCache cache)
         {
-            if (fileProvider == null)
+            if (hostingEnvironment == null)
             {
-                throw new ArgumentNullException(nameof(fileProvider));
+                throw new ArgumentNullException(nameof(hostingEnvironment));
             }
 
             if (cache == null)
@@ -41,13 +39,12 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
                 throw new ArgumentNullException(nameof(cache));
             }
 
-            _fileProvider = fileProvider;
+            _hostingEnvironment = hostingEnvironment;
             _cache = cache;
-            _requestPathBase = requestPathBase;
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> GetContentHashesAsync(string cacheKey, string content, HashAlgorithms hashAlgorithms)
+        public Task<IList<string>> GetContentHashesAsync(string cacheKey, string content, HashAlgorithms hashAlgorithms)
         {
             if (cacheKey == null)
             {
@@ -59,7 +56,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
                 throw new ArgumentNullException(nameof(content));
             }
 
-            if (!_cache.TryGetValue(cacheKey, out IEnumerable<string> hashes))
+            if (!_cache.TryGetValue(cacheKey, out IList<string> hashes))
             {
                 hashes = GetHashesForString(content, hashAlgorithms).ToList();
                 hashes = _cache.Set(cacheKey, hashes);
@@ -69,26 +66,29 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<string>> GetFileHashesAsync(string path, HashAlgorithms hashAlgorithms)
+        public Task<IList<string>> GetFileHashesAsync(HttpContext httpContext, string path, HashAlgorithms hashAlgorithms)
         {
             if (path == null)
             {
                 throw new ArgumentNullException(nameof(path));
             }
 
-            if (!_cache.TryGetValue(path, out IEnumerable<string> hashes))
+            if (!_cache.TryGetValue(path, out IList<string> hashes))
             {
-                var cacheEntryOptions = new MemoryCacheEntryOptions();
-                cacheEntryOptions.AddExpirationToken(_fileProvider.Watch(path));
-                var fileInfo = _fileProvider.GetFileInfo(path);
+                var fileProvider = _hostingEnvironment.WebRootFileProvider;
 
+                var cacheEntryOptions = new MemoryCacheEntryOptions();
+                cacheEntryOptions.AddExpirationToken(fileProvider.Watch(path));
+                var fileInfo = fileProvider.GetFileInfo(path);
+
+                var requestPathBase = httpContext.Request.PathBase;
                 if (!fileInfo.Exists &&
-                    _requestPathBase.HasValue &&
-                    path.StartsWith(_requestPathBase.Value, StringComparison.OrdinalIgnoreCase))
+                    requestPathBase.HasValue &&
+                    path.StartsWith(requestPathBase.Value, StringComparison.OrdinalIgnoreCase))
                 {
-                    var requestPathBaseRelativePath = path.Substring(_requestPathBase.Value.Length);
-                    cacheEntryOptions.AddExpirationToken(_fileProvider.Watch(requestPathBaseRelativePath));
-                    fileInfo = _fileProvider.GetFileInfo(requestPathBaseRelativePath);
+                    var requestPathBaseRelativePath = path.Substring(requestPathBase.Value.Length);
+                    cacheEntryOptions.AddExpirationToken(fileProvider.Watch(requestPathBaseRelativePath));
+                    fileInfo = fileProvider.GetFileInfo(requestPathBaseRelativePath);
                 }
 
                 if (fileInfo.Exists)

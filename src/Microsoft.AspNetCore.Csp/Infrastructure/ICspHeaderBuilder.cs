@@ -16,6 +16,4 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <returns>The <see cref="CspHeader"/> that represents the <paramref name="policy"/>.</returns>
         CspHeader GetHeader(HttpContext httpContext, ContentSecurityPolicy policy, bool supportMetaTag = false);
     }
-
-    // <inheritdoc />
 }

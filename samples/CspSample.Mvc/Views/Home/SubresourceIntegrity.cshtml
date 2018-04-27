@@ -1,37 +1,34 @@
-﻿@using Microsoft.AspNetCore.Csp.Infrastructure;
-@{
+﻿@{
     ViewData["Title"] = "Home Page";
 }
-
 
 <html>
 <head>
 
 </head>
 <body>
-<div>
-    <p>@ViewData["Message"]</p>
-    <p>Check the page source for scripts that have been automatically protected with subresource integrity.</p>
-    <p>These scripts must have a fallback-src specified so that the integrity hash can be generated.</p>
-    
-    <script src="https://code.jquery.com/jquery-3.2.1.min.js" 
-            asp-fallback-src="~/lib/jquery/jquery.min.js"
-            asp-fallback-test="window.jQuery" 
-            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-            crossorigin="anonymous">
-    </script>
+    <div>
+        <p>@ViewData["Message"]</p>
+        <p>Check the page source for scripts that have been automatically protected with subresource integrity.</p>
+        <p>These scripts must have a fallback-src specified so that the integrity hash can be generated.</p>
 
-    <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/4.0.0/bootstrap.min.js"
-            asp-fallback-src="~/lib/bootstrap/js/bootstrap.min.js"
-            asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal"
-            asp-subresource-integrity="true" 
-            asp-subresource-integrity-algorithms="HashAlgorithms.SHA384"></script>
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+                asp-fallback-src="~/lib/jquery/jquery.min.js"
+                asp-fallback-test="window.jQuery"
+                integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+                crossorigin="anonymous"></script>
 
-    <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet"
-          asp-fallback-href="~/lib/bootstrap/css/bootstrap.min.css"
-          asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute"
-          asp-subresource-integrity="true"
-          asp-subresource-integrity-algorithms="HashAlgorithms.SHA256 | HashAlgorithms.SHA384 | HashAlgorithms.SHA512" />
-</div>
+        <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/4.0.0/bootstrap.min.js"
+                asp-fallback-src="~/lib/bootstrap/js/bootstrap.min.js"
+                asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal"
+                asp-subresource-integrity="true"
+                asp-subresource-integrity-algorithms="HashAlgorithms.SHA384"></script>
+
+        <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet"
+              asp-fallback-href="~/lib/bootstrap/css/bootstrap.min.css"
+              asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute"
+              asp-subresource-integrity="true"
+              asp-subresource-integrity-algorithms="HashAlgorithms.SHA256 | HashAlgorithms.SHA384 | HashAlgorithms.SHA512" />
+    </div>
 </body>
 </html>

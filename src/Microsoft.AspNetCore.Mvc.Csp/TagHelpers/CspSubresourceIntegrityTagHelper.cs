@@ -6,13 +6,11 @@ using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Csp.Infrastructure;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Csp.Internal;
 using Microsoft.AspNetCore.Mvc.Razor.TagHelpers;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
 {
@@ -32,32 +30,28 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
         private const string CspIntegrityAlgorithmsAttributeName = "asp-subresource-integrity-algorithms";
 
         private readonly IActivePoliciesProvider _policyProvider;
-        private readonly IHostingEnvironment _hostingEnvironment;
-        private readonly IMemoryCache _cache;
-        private IHashProvider _hashProvider;
+        private readonly IHashProvider _hashProvider;
 
         /// <summary>
         /// Creates a new <see cref="CspPluginTypeTagHelper"/>.
         /// </summary>
         /// <param name="policyProvider">The <see cref="IActivePoliciesProvider"/>.</param>
-        /// <param name="hostingEnvironment">The <see cref="IHostingEnvironment"/>.</param>
-        /// <param name="cache">The <see cref="IMemoryCache"/>.</param>
+        /// <param name="hashProvider">The <see cref="IHashProvider"/>.</param>
         /// <param name="htmlEncoder">The <see cref="HtmlEncoder"/>.</param>
         /// <param name="urlHelperFactory">The <see cref="IUrlHelperFactory"/>.</param>
         public CspSubresourceIntegrityTagHelper(
             IActivePoliciesProvider policyProvider, 
-            IHostingEnvironment hostingEnvironment,
-            IMemoryCache cache,
-            HtmlEncoder htmlEncoder,
-            IUrlHelperFactory urlHelperFactory)
+            IHashProvider hashProvider,
+            IUrlHelperFactory urlHelperFactory,
+            HtmlEncoder htmlEncoder)
             : base(urlHelperFactory, htmlEncoder)
         {
             _policyProvider = policyProvider;
-            _hostingEnvironment = hostingEnvironment;
-            _cache = cache;
+            _hashProvider = hashProvider;
         }
 
-        // This tag helper must run before the ScriptTagHelper as it generates hashes based on the script tags markup.
+        // This tag helper must run before the script and link tag helpers
+        // since it adds attributes that are then used by them.
         public override int Order => -1010;
 
         /// <summary>
@@ -110,8 +104,6 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
                 throw new InvalidOperationException(); //(Resources.CspSubresourceIntegrityTagHelper_CannotGenerateHash());
             }
 
-            EnsureHashProvider();
-
             if (TryResolveUrl(path, resolvedUrl: out string resolvedUrl))
             {
                 path = resolvedUrl;
@@ -121,7 +113,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             var policy = await _policyProvider.GetActiveMainPolicyAsync(ViewContext.HttpContext);
             var hashAlgorithms = CspIntegrityAlgorithms ?? policy.DefaultHashAlgorithms;
 
-            var hashes = await _hashProvider.GetFileHashesAsync(path, hashAlgorithms);
+            var hashes = await _hashProvider.GetFileHashesAsync(ViewContext.HttpContext, path, hashAlgorithms);
 
             // Add the SRI attributes to the tag
             var spaceDelimitedHashes = string.Join(" ", hashes);
@@ -134,22 +126,6 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             var directiveName = context.TagName == LinkTag ? CspDirectiveNames.StyleSrc : CspDirectiveNames.ScriptSrc;
             var scriptDirective = policy.GetOrAddDirective(directiveName);
             scriptDirective.AppendQuoted(hashes.ToArray());
-        }
-
-        /// <summary>
-        /// Ensures the hash provider is instantiated since injecting it would introduce
-        /// a dependency on IHttpContextAccessor which has non-trivial performance impacts.
-        /// https://github.com/aspnet/Hosting/issues/793
-        /// </summary>
-        private void EnsureHashProvider()
-        {
-            if (_hashProvider == null)
-            {
-                _hashProvider = new DefaultHashProvider(
-                    _hostingEnvironment.WebRootFileProvider,
-                    _cache,
-                    ViewContext.HttpContext.Request.PathBase);
-            }
         }
     }
 }

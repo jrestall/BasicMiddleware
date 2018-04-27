@@ -1,7 +1,5 @@
 using System.Text;
-using Microsoft.AspNetCore.Csp.Internal;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
 namespace Microsoft.AspNetCore.Csp.Infrastructure
@@ -9,17 +7,14 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
     public class CspHeaderBuilder : ICspHeaderBuilder
     {
         private readonly INonceProvider _nonceProvider;
-        private readonly ILogger _logger;
 
         /// <summary>
         /// Creates a new instance of <see cref="CspHeaderBuilder"/>.
         /// </summary>
         /// <param name="nonceProvider">The nonce provider that generates nonces for the header.</param>
-        /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>
-        public CspHeaderBuilder(INonceProvider nonceProvider, ILoggerFactory loggerFactory)
+        public CspHeaderBuilder(INonceProvider nonceProvider)
         {
             _nonceProvider = nonceProvider;
-            _logger = loggerFactory?.CreateLogger<CspHeaderBuilder>();
         }
 
         /// <inheritdoc />
@@ -27,8 +22,6 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         {
             var headerName = GetHeaderName(policy.ReportOnly);
             var headerValue = GetHeaderValue(httpContext, policy, policy.ReportOnly);
-
-            _logger?.PolicySuccess();
 
             return new CspHeader(headerName, headerValue);
         }
