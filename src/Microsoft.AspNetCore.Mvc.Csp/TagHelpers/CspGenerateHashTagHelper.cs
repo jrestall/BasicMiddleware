@@ -92,7 +92,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             // Update the main policy with the inline script/style hashes.
             var directiveName = output.TagName == StyleTag ? CspDirectiveNames.StyleSrc : CspDirectiveNames.ScriptSrc;
             var directive = policy.GetOrAddDirective(directiveName);
-            directive.Append(hashes.ToArray());
+            directive.AppendQuoted(hashes.ToArray());
         }
 
         /// <summary>

@@ -3,19 +3,22 @@
 
 using System;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Csp.Infrastructure;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Csp.Internal;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Mvc.Razor.TagHelpers;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
 {
     [HtmlTargetElement(LinkTag, Attributes = CspSubresourceIntegrityAttributeName + ", " + FallbackHrefAttributeName)]
     [HtmlTargetElement(ScriptTag, Attributes = CspSubresourceIntegrityAttributeName + ", " + FallbackSrcAttributeName)]
-    public class CspSubresourceIntegrityTagHelper : TagHelper
+    public class CspSubresourceIntegrityTagHelper : UrlResolutionTagHelper
     {
         private const string LinkTag = "link";
         private const string ScriptTag = "script";
@@ -29,24 +32,33 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
         private const string CspIntegrityAlgorithmsAttributeName = "asp-subresource-integrity-algorithms";
 
         private readonly IActivePoliciesProvider _policyProvider;
-        private readonly IHashProvider _hashProvider;
+        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IMemoryCache _cache;
+        private IHashProvider _hashProvider;
 
         /// <summary>
         /// Creates a new <see cref="CspPluginTypeTagHelper"/>.
         /// </summary>
         /// <param name="policyProvider">The <see cref="IActivePoliciesProvider"/>.</param>
-        /// <param name="hashProvider">The <see cref="IHashProvider"/>.</param>
-        public CspSubresourceIntegrityTagHelper(IActivePoliciesProvider policyProvider, IHashProvider hashProvider)
+        /// <param name="hostingEnvironment">The <see cref="IHostingEnvironment"/>.</param>
+        /// <param name="cache">The <see cref="IMemoryCache"/>.</param>
+        /// <param name="htmlEncoder">The <see cref="HtmlEncoder"/>.</param>
+        /// <param name="urlHelperFactory">The <see cref="IUrlHelperFactory"/>.</param>
+        public CspSubresourceIntegrityTagHelper(
+            IActivePoliciesProvider policyProvider, 
+            IHostingEnvironment hostingEnvironment,
+            IMemoryCache cache,
+            HtmlEncoder htmlEncoder,
+            IUrlHelperFactory urlHelperFactory)
+            : base(urlHelperFactory, htmlEncoder)
         {
             _policyProvider = policyProvider;
-            _hashProvider = hashProvider;
+            _hostingEnvironment = hostingEnvironment;
+            _cache = cache;
         }
 
-        // This tag helper must run after the ScriptTagHelper as it generates hashes based on the script tags markup.
-        public override int Order
-        {
-            get  {  return -1000 + 100;   }
-        }
+        // This tag helper must run before the ScriptTagHelper as it generates hashes based on the script tags markup.
+        public override int Order => -1010;
 
         /// <summary>
         /// Gets or sets the value which determines if the hash is computed or not.
@@ -71,10 +83,6 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
         /// </summary>
         [HtmlAttributeName(FallbackSrcAttributeName)]
         public string FallbackSrc { get; set; }
-
-        [HtmlAttributeNotBound]
-        [ViewContext]
-        public ViewContext ViewContext { get; set; }
 
         /// <inheritdoc />
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
@@ -102,6 +110,13 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
                 throw new InvalidOperationException(); //(Resources.CspSubresourceIntegrityTagHelper_CannotGenerateHash());
             }
 
+            EnsureHashProvider();
+
+            if (TryResolveUrl(path, resolvedUrl: out string resolvedUrl))
+            {
+                path = resolvedUrl;
+            }
+
             // Get the provided hash algorithms or use the policy's defaults.
             var policy = await _policyProvider.GetActiveMainPolicyAsync(ViewContext.HttpContext);
             var hashAlgorithms = CspIntegrityAlgorithms ?? policy.DefaultHashAlgorithms;
@@ -116,67 +131,25 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             // Update content security policy with SRI hashes.
             // This enables support for external script hashing in CSP 3.0.
             // https://www.w3.org/TR/CSP3/#external-hash    
-            var scriptDirective = policy.GetOrAddDirective(CspDirectiveNames.ScriptSrc);
-            scriptDirective.Append(spaceDelimitedHashes);
-            
-            if(!output.PostContent.IsModified)
-            {
-                return;
-            }
-
-            if(context.TagName == ScriptTag)
-            {
-                // Search for fallback script if added, hash it and add to CSP.
-                // Example PostContent output:
-                //  <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.0.0/bootstrap.min.js"></script>
-                //  <script>(typeof($.fn.modal) === 'undefined'||document.write("<script src=\"\/lib\/bootstrap\/js\/bootstrap.min.js\"><\/script>"));</script>
-
-                await SecureFallbackScripts("<script ", context, policy, output.PostContent, spaceDelimitedHashes);
-            }
-            else if(context.TagName == LinkTag)
-            {
-                // Search for fallback style if added, hash it and add to CSP.
-                // Example PostContent output:
-                //  <link rel="stylesheet" href="//ajax.aspnetcdn.com/ajax/bootstrap/3.0.0/css/bootstrap.min.css" />
-                //  <meta name="x-stylesheet-fallback-test" class="hidden" />
-                //  <script>!function(a,b,c){var d,e=document,f=e.getElementsByTagName("SCRIPT"),g=f[f.length-1].previousElementSibling,h=e.defaultView&amp;&amp;e.defaultView.getComputedStyle?e.defaultView.getComputedStyle(g):g.currentStyle;if(h&amp;&amp;h[a]!==b)for(d=0;d<c.length;d++)e.write('<link rel="stylesheet" href="'+c[d]+'"/>')}("visibility","hidden",["\/lib\/bootstrap\/css\/bootstrap.min.css"]);</script>
-
-                await SecureFallbackScripts("<link ", context, policy, output.PostContent, spaceDelimitedHashes);
-            }
+            var directiveName = context.TagName == LinkTag ? CspDirectiveNames.StyleSrc : CspDirectiveNames.ScriptSrc;
+            var scriptDirective = policy.GetOrAddDirective(directiveName);
+            scriptDirective.AppendQuoted(hashes.ToArray());
         }
 
-        private async Task SecureFallbackScripts(string startTag, TagHelperContext context, ContentSecurityPolicy policy, TagHelperContent postContent, string hashes)
+        /// <summary>
+        /// Ensures the hash provider is instantiated since injecting it would introduce
+        /// a dependency on IHttpContextAccessor which has non-trivial performance impacts.
+        /// https://github.com/aspnet/Hosting/issues/793
+        /// </summary>
+        private void EnsureHashProvider()
         {
-            var content = postContent.GetContent();
-            // Insert SRI hash into fallback loading script
-            var attributeInsertIndex = content.LastIndexOf(startTag, StringComparison.Ordinal);
-            var modifiedPostContent = content.Insert(attributeInsertIndex + startTag.Length, $"integrity=\\\"{hashes}\\\" ");
-            postContent.SetHtmlContent(modifiedPostContent);
-
-            // Hash the fallback script and add to content security policy
-            var inlineScript = FindInlineScriptTag(modifiedPostContent);
-            if(inlineScript == null)
+            if (_hashProvider == null)
             {
-                // TODO: Exception
-                return;
+                _hashProvider = new DefaultHashProvider(
+                    _hostingEnvironment.WebRootFileProvider,
+                    _cache,
+                    ViewContext.HttpContext.Request.PathBase);
             }
-
-            var fallbackScriptHashes = await _hashProvider.GetContentHashesAsync(context.UniqueId, inlineScript, policy.DefaultHashAlgorithms);
-            
-
-            var scriptDirective = policy.GetOrAddDirective(CspDirectiveNames.ScriptSrc);
-            scriptDirective.Append(fallbackScriptHashes.ToArray()); 
-        }
-
-        private string FindInlineScriptTag(string htmlContent)
-        {
-            int from = htmlContent.LastIndexOf("<script>", StringComparison.Ordinal) + "<script>".Length;
-            if(from == -1) return null;
-
-            int to = htmlContent.LastIndexOf("</script>", StringComparison.Ordinal);
-            if(to == -1) return null;
-
-            return htmlContent.Substring(from, to - from);
         }
     }
 }

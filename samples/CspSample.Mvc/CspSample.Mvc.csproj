@@ -12,4 +12,10 @@
     <ProjectReference Include="..\..\src\Microsoft.AspNetCore.Csp\Microsoft.AspNetCore.Csp.csproj" />
     <ProjectReference Include="..\..\src\Microsoft.AspNetCore.Mvc.Csp\Microsoft.AspNetCore.Mvc.Csp.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Views\Home\SubresourceIntegrity.cshtml">
+      <Pack>$(IncludeRazorContentInPack)</Pack>
+    </Content>
+  </ItemGroup>
 </Project>

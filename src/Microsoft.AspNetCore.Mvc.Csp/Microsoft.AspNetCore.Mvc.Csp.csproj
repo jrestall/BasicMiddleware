@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.1.0-rc1-30656" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Runtime" Version="2.1.0-rc1-30656" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor" Version="2.1.0-rc1-30656" />
   </ItemGroup>
 
   <ItemGroup>

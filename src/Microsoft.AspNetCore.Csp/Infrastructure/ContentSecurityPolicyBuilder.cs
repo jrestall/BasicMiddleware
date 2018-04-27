@@ -262,6 +262,11 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
         private IEnumerable<string> GetSandboxValues(SandboxPermission[] sandboxPermissions)
         {
+            if (sandboxPermissions == null)
+            {
+                throw new ArgumentNullException(nameof(sandboxPermissions));
+            }
+
             foreach (var permission in sandboxPermissions)
             {
                 yield return SandboxPermissionValues[permission];
@@ -270,6 +275,12 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
         private IEnumerable<string> GetSubresourceValues(Subresource[] subresources)
         {
+            // Default to requiring script and style integrity in the case neither is specified.
+            if (subresources == null)
+            {
+                subresources = new[] {Subresource.Script, Subresource.Style};
+            }
+            
             foreach (var subresource in subresources)
             {
                 yield return SubresourceValues[subresource];

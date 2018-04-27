@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -60,7 +61,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
             if (!_cache.TryGetValue(cacheKey, out IEnumerable<string> hashes))
             {
-                hashes = GetHashesForString(content, hashAlgorithms);
+                hashes = GetHashesForString(content, hashAlgorithms).ToList();
                 hashes = _cache.Set(cacheKey, hashes);
             }
 
@@ -92,7 +93,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
                 if (fileInfo.Exists)
                 {
-                    hashes = GetHashesForFile(fileInfo, hashAlgorithms);
+                    hashes = GetHashesForFile(fileInfo, hashAlgorithms).ToList();
                 }
                 else
                 {

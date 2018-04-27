@@ -34,7 +34,8 @@ namespace CspSample.Mvc
                     })
                     .AddScriptSrc(src => src.AddNonce())
                     .AddStyleSrc(src => src.AddNonce())
-                    .ReportTo("/csp-reports")
+                    .ReportUri("/csp-reports")
+                    .ReportTo("csp-reports")
                     .AddManifestSrc(src =>
                     {
                         src.AllowHost("http://*.example.com");
@@ -44,6 +45,23 @@ namespace CspSample.Mvc
 
                 options.AddPolicy("Policy2", policy =>
                     policy.AddDefaultSrc(src => src.AllowNone().AddNonce())
+                );
+
+                options.AddPolicy("SubresourceIntegrityPolicy", policy => policy
+                    .RequireSubresourceIntegrity(Subresource.Script, Subresource.Style)
+                    .AddScriptSrc(src =>
+                    {
+                        src.AllowSelf();
+                        //src.AllowHost("https://code.jquery.com");
+                        //src.AllowHost("https://ajax.aspnetcdn.com");
+                        src.RequireSampleInReport();
+                    })
+                    .AddStyleSrc(src =>
+                    {
+                        src.AllowSelf();
+                        //src.AllowHost("https://ajax.aspnetcdn.com");
+                    })
+                    .ReportUri("/csp-reports")
                 );
 
                 options.DefaultPolicyName = "Policy1";

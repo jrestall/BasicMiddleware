@@ -7,7 +7,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Reports
 {
     public class CspReportRequest
     {
-        [JsonProperty(PropertyName = "csp-report")]
+        [JsonProperty("csp-report")]
         public CspReport CspReport { get; set; }
     }
 }

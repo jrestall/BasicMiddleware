@@ -7,31 +7,37 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Reports
 {
     public class CspReport
     {
-        [JsonProperty(PropertyName = "document-uri")]
+        [JsonProperty("document-uri")]
         public string DocumentUri { get; set; }
 
-        [JsonProperty(PropertyName = "referrer")]
+        [JsonProperty("referrer")]
         public string Referrer { get; set; }
 
-        [JsonProperty(PropertyName = "blocked-uri")]
-        public string BlockedUri { get; set; }
-
-        [JsonProperty(PropertyName = "effective-directive")]
-        public string EffectiveDirective { get; set; }
-
-        [JsonProperty(PropertyName = "violated-directive")]
+        [JsonProperty("violated-directive")]
         public string ViolatedDirective { get; set; }
 
-        [JsonProperty(PropertyName = "original-policy")]
+        [JsonProperty("effective-directive")]
+        public string EffectiveDirective { get; set; }
+
+        [JsonProperty("original-policy")]
         public string OriginalPolicy { get; set; }
 
-        [JsonProperty(PropertyName = "disposition")]
+        [JsonProperty("disposition")]
         public string Disposition { get; set; }
 
-        [JsonProperty(PropertyName = "status-code")]
-        public int StatusCode { get; set; }
+        [JsonProperty("blocked-uri")]
+        public string BlockedUri { get; set; }
 
-        [JsonProperty(PropertyName = "script-sample")]
-        public int ScriptSample { get; set; }
+        [JsonProperty("line-number")]
+        public long LineNumber { get; set; }
+
+        [JsonProperty("source-file")]
+        public string SourceFile { get; set; }
+
+        [JsonProperty("status-code")]
+        public long StatusCode { get; set; }
+
+        [JsonProperty("script-sample")]
+        public string ScriptSample { get; set; }
     }
 }

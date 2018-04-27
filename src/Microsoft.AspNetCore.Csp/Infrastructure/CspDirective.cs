@@ -71,6 +71,14 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             _directiveValue.Append(separator + string.Join(" ", values));
         }
 
+        public void AppendQuoted(params string[] values)
+        {
+            foreach (var value in values)
+            {
+                Append($"'{value}'");
+            }
+        }
+
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>

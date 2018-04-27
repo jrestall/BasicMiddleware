@@ -1,11 +1,21 @@
 ﻿using Microsoft.AspNetCore.Csp;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Csp.Reports;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace CspSample.Mvc.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly ILogger<HomeController> _logger;
+
+        public HomeController(ILogger<HomeController> logger)
+        {
+            _logger = logger;
+        }
+
         [EnableCsp]
         public IActionResult Enable()
         {
@@ -30,6 +40,14 @@ namespace CspSample.Mvc.Controllers
             return View("Index");
         }
 
+        [EnableCsp("SubresourceIntegrityPolicy")]
+        public IActionResult SubresourceIntegrity()
+        {
+            ViewData["Message"] = "SubresourceIntegrityPolicy is enabled.";
+
+            return View();
+        }
+
         [DisableCsp]
         public IActionResult Disable()
         {
@@ -38,9 +56,13 @@ namespace CspSample.Mvc.Controllers
             return View("Index");
         }
 
-        public IActionResult CspReports(CspReportRequest request)
+        [HttpPost]
+        public IActionResult CspReports([FromBody]CspReportRequest request)
         {
-            return Ok();
+            var report = JsonConvert.SerializeObject(request);
+            _logger.LogWarning($"CSP Violation Report: {report}");
+
+            return NoContent();
         }
     }
 }
