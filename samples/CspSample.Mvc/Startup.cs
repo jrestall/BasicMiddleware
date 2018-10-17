@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace CspSample.Mvc
 {
@@ -20,6 +21,36 @@ namespace CspSample.Mvc
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // services.AddHeaders(options =>
+            //     options.AddPolicy("SecureDefault", builder => builder
+            //         .AddXFrameOptions(Deny)
+            //         .AddXSSProtection(EnableAndBlock)
+            //         .AddContentType(NoSniff)
+            //         .ReferrerPolicy(NoReferrer)
+            //         .AddHeader("X-Permitted-Cross-Domain-Policies", "noopen")
+            //         .AddHeader("X-Download-Options", "noopen")
+            //         .AddHeader("X-Powered-By", "OrchardCore")
+            //         .RemoveHeader("Server")
+            //     )
+            //     options.AppendPolicy("SecureDefault", builder => builder
+            //         .AddXFrameOptions(Deny)
+            //     )
+            //     options.ConfigurePolicy(policy => policy.)
+            // );
+
+            // services.AddFeaturePolicy(options =>
+            //     options.AddPolicy("DefaultFeature", features => features
+            //         .AddCamera()
+            //         .AddVibration(src => src.None())
+            //         .AddPayments(src =>
+            //         {
+            //             src.AllowSelf();
+            //             src.AllowHost("https://example.com");
+            //         })
+            //         .AddMicrophone()
+            //     )
+            // );
+
             services.AddCsp(options =>
             {
                 options.AddPolicy("Policy1", policy => policy
@@ -72,6 +103,37 @@ namespace CspSample.Mvc
                 .AddCspReportMediaType();
 
             services.AddMvcCore().AddCsp();
+
+            services.AddScoped<IConfigureOptions<CspOptions>, MultitenantSrc>();
+            services.AddScoped<IConfigureOptions<CspOptions>, TrialUserSrc>();
+        }
+
+        public class MultitenantSrc:  IConfigureOptions<CspOptions>
+        {
+            public void Configure (CspOptions options)
+            {
+                var policy = options.GetPolicy("Policy1");
+                policy.Append(policy => 
+                    policy.AddScriptSrc(src => src.AllowHost("myblog.blogs.com"))
+                );
+                policy.Override(policy => 
+                    policy.AddStyleSrc(src => src.AllowHost("myblog.blogs.com"))
+                );
+            }
+        }
+
+        public class TrialUserSrc:  IConfigureOptions<CspOptions>
+        {
+            public void Configure (CspOptions options)
+            {
+                //if (context.User.HasClaim(c => c.Type == ClaimTypes.TrialUser))
+                //{
+                    var policy = options.GetPolicy("Policy1");
+                    policy.Override(policy => 
+                        policy.AddDefaultSrc(src => src.AllowHost("trial.company.com"))
+                    );
+                //}
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

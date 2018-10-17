@@ -17,7 +17,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// Creates a new instance of <see cref="DefaultCspProvider"/>.
         /// </summary>
         /// <param name="options">The options configured for the application.</param>
-        public DefaultCspProvider(IOptions<CspOptions> options)
+        public DefaultCspProvider(IOptionsSnapshot<CspOptions> options)
         {
             _options = options.Value;
         }

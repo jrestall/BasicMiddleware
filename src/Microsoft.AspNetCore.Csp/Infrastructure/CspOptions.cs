@@ -11,8 +11,53 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
     /// </summary>
     public class CspOptions
     {
-        private string _defaultPolicyName = "__DefaultContentSecurityPolicy";
-        private IDictionary<string, ContentSecurityPolicy> PolicyMap { get; } = new Dictionary<string, ContentSecurityPolicy>();
+        // Default Content-Security-Policy:
+        //     default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:;
+        //     object-src 'none'; script-src https:; style-src 'self' https: 'unsafe-inline'
+        private static readonly ContentSecurityPolicy DefaultContentSecurityPolicy
+            = new ContentSecurityPolicyBuilder()
+                .AddDefaultSrc(src =>
+                {
+                    src.AllowSelf();
+                    src.AllowSchema(CspDirectiveSchemas.Https);
+                })
+                .AddFontSrc(src =>
+                {
+                    src.AllowSelf();
+                    src.AllowSchema(CspDirectiveSchemas.Https);
+                    src.AllowSchema(CspDirectiveSchemas.Data);
+                })
+                .AddImageSrc(src =>
+                {
+                    src.AllowSelf();
+                    src.AllowSchema(CspDirectiveSchemas.Https);
+                    src.AllowSchema(CspDirectiveSchemas.Data);
+                })
+                .AddObjectSrc(src =>
+                {
+                    src.AllowNone();
+                })
+                .AddScriptSrc(src =>
+                {
+                    src.AllowSelf();
+                    src.AllowSchema(CspDirectiveSchemas.Https);
+                })
+                .AddStyleSrc(src =>
+                {
+                    src.AllowSelf();
+                    src.AllowSchema(CspDirectiveSchemas.Https);
+                    src.AllowUnsafeInline();
+                })
+                .Build();
+        
+        private const string OriginalDefaultPolicyName = "__DefaultContentSecurityPolicy";
+
+        private string _defaultPolicyName = OriginalDefaultPolicyName;
+
+        private IDictionary<string, ContentSecurityPolicy> PolicyMap { get; } = new Dictionary<string, ContentSecurityPolicy>
+        {
+            {OriginalDefaultPolicyName, DefaultContentSecurityPolicy}
+        };
 
         public string DefaultPolicyName
         {

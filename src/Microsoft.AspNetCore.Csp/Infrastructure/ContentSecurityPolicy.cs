@@ -35,19 +35,19 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// only reports policy violations instead of enforcing them.
         /// </summary>
         /// <value><c>true</c> if report only; otherwise, <c>false</c>.</value>
-        public bool ReportOnly { get; set; }
+        public bool ReportOnly { get; set; } = false;
 
         /// <summary>
         /// The default hash algorithms used when generating hashes for the content security policy.
         /// The default is <see cref="HashAlgorithms.SHA384"/>.
         /// </summary>
         public HashAlgorithms DefaultHashAlgorithms { get; set; } = HashAlgorithms.SHA384;
-
+        
         /// <summary>
         /// Adds a new policy directive.
         /// </summary>
         /// <param name="name">The name of the directive.</param>
-        /// <param name="configureDirective">A delegate which can use a policy builder to build a directive.</param>
+        /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
         public void AddDirective(string name, Action<CspDirectiveBuilder> configureDirective)
         {
             if (name == null)
@@ -83,6 +83,31 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             }
 
             Directives[name] = directive;
+        }
+        
+        /// <summary>
+        /// Appends to a directive.
+        /// </summary>
+        /// <param name="name">The name of the directive.</param>
+        /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
+        public void AppendDirective(string name, Action<CspDirectiveBuilder> configureDirective)
+        {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            if (configureDirective == null)
+            {
+                throw new ArgumentNullException(nameof(configureDirective));
+            }
+
+            var directiveBuilder = new CspDirectiveBuilder();
+            configureDirective(directiveBuilder);
+            var appendDirective = directiveBuilder.Build();
+
+            var directive = GetOrAddDirective(name);
+            directive.Merge(appendDirective);
         }
 
         /// <summary>

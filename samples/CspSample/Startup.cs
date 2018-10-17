@@ -52,6 +52,7 @@ namespace CspSample
                 policy.AddScriptSrc(src => src.AllowUnsafeInline().AddNonce());
                 policy.RequireSubresourceIntegrity(Subresource.Script, Subresource.Style);
             });
+            app.UseCsp();
 
             app.Run(async context =>
             {

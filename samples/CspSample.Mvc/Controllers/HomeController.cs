@@ -33,6 +33,10 @@ namespace CspSample.Mvc.Controllers
         }
 
         [EnableCsp("Policy1", "Policy2")]
+        //[AppendCsp("BetaUsers", Targets = "Policy1, Policy2")]
+        //[OverrideCsp("BetaUsers2", Targets = "Policy1")]
+        //[AppendCspDirective("script-src", "'self'", Targets = "Policy1")]
+        //[OverrideCspDirective("script-src", "'self'")]
         public IActionResult EnableNamedMultiple()
         {
             ViewData["Message"] = "Policy1 and Policy2 are enabled.";
