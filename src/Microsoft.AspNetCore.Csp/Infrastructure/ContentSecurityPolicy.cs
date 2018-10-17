@@ -28,14 +28,17 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             Copy(policy);
         }
 
-        public IDictionary<string, CspDirective> Directives { get; } = new Dictionary<string, CspDirective>();
+		/// <summary>
+		/// The directives for the <see cref="ContentSecurityPolicy"/>.
+		/// </summary>
+		public IDictionary<string, CspDirective> Directives { get; } = new Dictionary<string, CspDirective>();
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="ContentSecurityPolicy"/>
         /// only reports policy violations instead of enforcing them.
         /// </summary>
         /// <value><c>true</c> if report only; otherwise, <c>false</c>.</value>
-        public bool ReportOnly { get; set; } = false;
+        public bool ReportOnly { get; set; }
 
         /// <summary>
         /// The default hash algorithms used when generating hashes for the content security policy.
@@ -83,39 +86,50 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             }
 
             Directives[name] = directive;
-        }
-        
-        /// <summary>
-        /// Appends to a directive.
-        /// </summary>
-        /// <param name="name">The name of the directive.</param>
-        /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
-        public void AppendDirective(string name, Action<CspDirectiveBuilder> configureDirective)
-        {
-            if (name == null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
+		}
 
-            if (configureDirective == null)
-            {
-                throw new ArgumentNullException(nameof(configureDirective));
-            }
+		/// <summary>
+		/// Appends the configured policy to this instance.
+		/// </summary>
+		/// <param name="configurePolicy">A delegate which can use a policy builder to build a policy to append.</param>
+		public void Append(Action<ContentSecurityPolicyBuilder> configurePolicy)
+	    {
+			if (configurePolicy == null)
+	        {
+		        throw new ArgumentNullException(nameof(configurePolicy));
+	        }
 
-            var directiveBuilder = new CspDirectiveBuilder();
-            configureDirective(directiveBuilder);
-            var appendDirective = directiveBuilder.Build();
+	        var policyBuilder = new ContentSecurityPolicyBuilder();
+	        configurePolicy(policyBuilder);
+	        var policy = policyBuilder.Build();
 
-            var directive = GetOrAddDirective(name);
-            directive.Merge(appendDirective);
-        }
+		    Copy(policy);
+	    }
 
-        /// <summary>
-        /// Gets the directive based on the <paramref name="directiveName"/>.
-        /// </summary>
-        /// <param name="directiveName">The name of the directive to lookup.</param>
-        /// <returns>The <see cref="CspDirective"/> if the directive was added. <c>null</c> otherwise.</returns>
-        public CspDirective GetDirective(string directiveName)
+	    /// <summary>
+	    /// Overrides directives with the provided configured policies directives.
+	    /// </summary>
+	    /// <param name="configurePolicy">A delegate which can use a policy builder to build an overriding policy.</param>
+		public void Override(Action<ContentSecurityPolicyBuilder> configurePolicy)
+	    {
+			if (configurePolicy == null)
+		    {
+			    throw new ArgumentNullException(nameof(configurePolicy));
+		    }
+
+		    var policyBuilder = new ContentSecurityPolicyBuilder();
+		    configurePolicy(policyBuilder);
+		    var policy = policyBuilder.Build();
+
+		    Copy(policy, true);
+		}
+
+		/// <summary>
+		/// Gets the directive based on the <paramref name="directiveName"/>.
+		/// </summary>
+		/// <param name="directiveName">The name of the directive to lookup.</param>
+		/// <returns>The <see cref="CspDirective"/> if the directive was added. <c>null</c> otherwise.</returns>
+		public CspDirective GetDirective(string directiveName)
         {
             if (directiveName == null)
             {
@@ -146,11 +160,12 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             return directive;
         }
 
-        /// <summary>
-        /// Copies the given <paramref name="policy"/> to the existing properties in the builder.
-        /// </summary>
-        /// <param name="policy">The policy which needs to be copied.</param>
-        private void Copy(ContentSecurityPolicy policy)
+	    /// <summary>
+	    /// Copies the given <paramref name="policy"/> to the existing properties in the builder.
+	    /// </summary>
+	    /// <param name="policy">The policy which needs to be copied.</param>
+	    /// <param name="overrideDirectives"></param>
+	    private void Copy(ContentSecurityPolicy policy, bool overrideDirectives = false)
         {
             if (policy == null)
             {
@@ -162,11 +177,39 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
             foreach (var directive in policy.Directives)
             {
-                Directives[directive.Key] = new CspDirective(directive.Value);
+	            if (overrideDirectives)
+	            {
+					// Override: script-src 'self' -> script-src example.org
+					Directives[directive.Key] = directive.Value;
+				}
+	            else
+	            {
+		            var directiveAppend = GetOrAddDirective(directive.Key);
+
+					// The value of default-src is joined with the addition if it is a fetch directive. 
+			        AppendDefaultSrc(directive.Key, directiveAppend, Directives[CspDirectiveNames.DefaultSrc]);
+
+		            // Append: script-src 'self' -> script-src 'self' example.org
+					directiveAppend.Copy(directive.Value);
+				}
             }
         }
 
-        /// <summary>
+	    private void AppendDefaultSrc(string directiveName, CspDirective directive, CspDirective defaultDirective)
+	    {
+		    // Nothing to be done if there is no default-src directive.
+			if (defaultDirective == null) return;
+
+			// Nothing to be done if we are appending to the default-src directive.
+			if (directiveName == CspDirectiveNames.DefaultSrc) return;
+
+			// Only Fetch directives inherit the 'default-src' directive.
+		    if (directive.Type != CspDirectiveType.Fetch) return;
+
+		    directive.Append(defaultDirective.Value);
+	    }
+
+	    /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>

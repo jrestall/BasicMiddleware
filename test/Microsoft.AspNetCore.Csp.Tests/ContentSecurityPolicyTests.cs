@@ -1,10 +1,10 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
+using Microsoft.AspNetCore.Csp.Infrastructure;
 using Xunit;
 
-namespace Microsoft.AspNetCore.Csp.Infrastructure
+namespace Microsoft.AspNetCore.Csp.Tests
 {
     public class ContentSecurityPolicyTest
     {
@@ -20,44 +20,55 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         }
 
         [Fact]
-        public void AppendingOverridesNoneValues()
+        public void CanAppendToSourceList()
         {
-            // Arrange
-            var policy = new ContentSecurityPolicy();
-            policy.AddDirective(CspDirectiveNames.ScriptSrc, src => src.AllowNone());
+			// Arrange
+	        // Produces: default-src 'self'; script-src 'none';
+			var policy = new ContentSecurityPolicyBuilder()
+		        .AddDefaultSrc(src => src.AllowSelf())
+		        .AddScriptSrc(src => src.AllowNone())
+		        .Build();
 
-            // Act
-            policy.AppendDirective(CspDirectiveNames.ScriptSrc, src => src.AllowSelf());
+			// Act
+			// Append value to the source list, override 'none' values
+			// Produces: default-src 'self'; script-src 'self' example.org; object-src 'self' dot.net
+			policy.Append(p =>
+			{
+				p.AddScriptSrc(src => src.AllowHost("example.org"));
+				p.AddObjectSrc(src => src.AllowHost("dot.net"));
+			});
 
             // Assert
-            Assert.Equal(1, policy.Directives.Count());
-            Assert.Equal("'self'", policy.Directives["script-src"].Value);
-        }
+            Assert.Equal(3, policy.Directives.Count);
+	        Assert.Equal("'self'", policy.Directives["default-src"].Value);
+			Assert.Equal("'self' example.org", policy.Directives["script-src"].Value);
+			Assert.Equal("dot.net", policy.Directives["object-src"].Value);
+		}
 
-        [Fact]
-        public void ToString_ReturnsThePropertyValues()
-        {
-            // Arrange
-            var corsPolicy = new CorsPolicy
-            {
-                PreflightMaxAge = TimeSpan.FromSeconds(12),
-                SupportsCredentials = true
-            };
-            corsPolicy.Headers.Add("foo");
-            corsPolicy.Headers.Add("bar");
-            corsPolicy.Origins.Add("http://example.com");
-            corsPolicy.Origins.Add("http://example.org");
-            corsPolicy.Methods.Add("GET");
+	    [Fact]
+	    public void CanOverridePreviouslySetSourceList()
+	    {
+			// Arrange
+			// Produces: default-src 'self'; script-src 'none';
+			var policy = new ContentSecurityPolicyBuilder()
+			    .AddDefaultSrc(src => src.AllowSelf())
+			    .AddScriptSrc(src => src.AllowNone())
+			    .Build();
 
-            // Act
-            var policyString = corsPolicy.ToString();
+			// Act
+			// Overrides the previously set source list, override 'none' values
+			// Produces: default-src 'self'; script-src example.org; object-src 'self'
+			policy.Override(p =>
+		    {
+			    p.AddScriptSrc(src => src.AllowHost("example.org"));
+			    p.AddObjectSrc(src => src.AllowSelf());
+		    });
 
-            // Assert
-            Assert.Equal(
-                @"AllowAnyHeader: False, AllowAnyMethod: False, AllowAnyOrigin: False, PreflightMaxAge: 12,"+
-                " SupportsCredentials: True, Origins: {http://example.com,http://example.org}, Methods: {GET},"+
-                " Headers: {foo,bar}, ExposedHeaders: {}",
-                policyString);
-        }
-    }
+		    // Assert
+		    Assert.Equal(3, policy.Directives.Count);
+		    Assert.Equal("'self'", policy.Directives["default-src"].Value);
+		    Assert.Equal("example.org", policy.Directives["script-src"].Value);
+		    Assert.Equal("'self'", policy.Directives["object-src"].Value);
+	    }
+	}
 }

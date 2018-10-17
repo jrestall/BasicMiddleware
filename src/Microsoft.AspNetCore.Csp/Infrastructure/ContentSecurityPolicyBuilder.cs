@@ -128,7 +128,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder AddBaseUri(Action<CspDirectiveBuilder> configureDirective) 
-            => AddDirective(CspDirectiveNames.BaseUri, configureDirective);
+            => AddDirective(CspDirectiveNames.BaseUri, configureDirective, CspDirectiveType.Document);
 
         /// <summary>
         /// Adds a plugin-types directive to the <see cref="ContentSecurityPolicy"/>.
@@ -136,7 +136,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="mimeTypes">The valid mime types to allow.</param>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder AddPluginTypes(params string[] mimeTypes)
-            => AddDirective(CspDirectiveNames.PluginTypes, mimeTypes);
+            => AddDirective(CspDirectiveNames.PluginTypes, mimeTypes, CspDirectiveType.Document);
 
         /// <summary>
         /// Adds a sandbox directive to the <see cref="ContentSecurityPolicy"/>.
@@ -144,7 +144,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="sandboxPermissions">The permissions to be applied to the web page's actions.</param>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder AddSandbox(params SandboxPermission[] sandboxPermissions)
-            => AddDirective(CspDirectiveNames.Sandbox, GetSandboxValues(sandboxPermissions), supportsMetaTag: false, supportsReportHeader: false);
+            => AddDirective(CspDirectiveNames.Sandbox, GetSandboxValues(sandboxPermissions), CspDirectiveType.Document, supportsMetaTag: false, supportsReportHeader: false);
 
         /// <summary>
         /// Adds a form-action directive to the <see cref="ContentSecurityPolicy"/>.
@@ -152,7 +152,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder AddFormAction(Action<CspDirectiveBuilder> configureDirective)
-            => AddDirective(CspDirectiveNames.FormAction, configureDirective);
+            => AddDirective(CspDirectiveNames.FormAction, configureDirective, CspDirectiveType.Navigation);
 
         /// <summary>
         /// Adds a frame-ancestors directive to the <see cref="ContentSecurityPolicy"/>.
@@ -160,14 +160,14 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder AddFrameAncestors(Action<CspDirectiveBuilder> configureDirective)
-            => AddDirective(CspDirectiveNames.FrameAncestors, configureDirective, supportsMetaTag: false);
+            => AddDirective(CspDirectiveNames.FrameAncestors, configureDirective, CspDirectiveType.Navigation, supportsMetaTag: false);
 
         /// <summary>
         /// Adds a block-all-mixed-content directive to the <see cref="ContentSecurityPolicy"/>.
         /// </summary>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder BlockAllMixedContent() 
-            => AddDirective(CspDirectiveNames.BlockAllMixedContent);
+            => AddDirective(CspDirectiveNames.BlockAllMixedContent, type: CspDirectiveType.Other);
 
         /// <summary>
         /// Adds a worker-src directive to the <see cref="ContentSecurityPolicy"/>.
@@ -175,14 +175,14 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="subresources">A delegate which can use a directive builder to build a directive.</param>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder RequireSubresourceIntegrity(params Subresource[] subresources)
-            => AddDirective(CspDirectiveNames.RequireSriFor, GetSubresourceValues(subresources));
+            => AddDirective(CspDirectiveNames.RequireSriFor, GetSubresourceValues(subresources), CspDirectiveType.Other);
 
         /// <summary>
         /// Adds a upgrade-insecure-requests directive to the <see cref="ContentSecurityPolicy"/>.
         /// </summary>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder UpgradeInsecureRequests() 
-            => AddDirective(CspDirectiveNames.UpgradeInsecureRequests);
+            => AddDirective(CspDirectiveNames.UpgradeInsecureRequests, type: CspDirectiveType.Other);
 
         /// <summary>
         /// Adds a report-uri directive to the <see cref="ContentSecurityPolicy"/>.
@@ -190,7 +190,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="uri">The uri the browser will send violation reports to.</param>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder ReportUri(string uri)
-            => AddDirective(CspDirectiveNames.ReportUri, new[] { uri }, supportsMetaTag: false);
+            => AddDirective(CspDirectiveNames.ReportUri, new[] { uri }, CspDirectiveType.Reporting, supportsMetaTag: false);
 
         /// <summary>
         /// Adds a report-to directive to the <see cref="ContentSecurityPolicy"/>.
@@ -198,7 +198,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="group">The reporting group the browser will send violation reports to.</param>
         /// <returns>The current policy builder.</returns>
         public ContentSecurityPolicyBuilder ReportTo(string group)
-            => AddDirective(CspDirectiveNames.ReportTo, new[] { group }, supportsMetaTag: false);
+            => AddDirective(CspDirectiveNames.ReportTo, new[] { group }, CspDirectiveType.Reporting, supportsMetaTag: false);
 
         /// <summary>
         /// Specifies that the <see cref="ContentSecurityPolicy"/> should only report policy violations instead of enforcing them.
@@ -210,10 +210,21 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             return this;
         }
 
-        protected virtual ContentSecurityPolicyBuilder AddDirective<TBuilder>(
+	    /// <summary>
+	    /// Adds a directive to the <see cref="ContentSecurityPolicy"/>.
+	    /// </summary>
+	    /// <param name="directiveName">The name of the directive.</param>
+	    /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
+	    /// <param name="type">The type of the directive.</param>
+	    /// <param name="supportsMetaTag">True if the <see cref="CspDirective"/> is supported within HTML meta tags, otherwise false.</param>
+	    /// <param name="supportsReportHeader">True if this <see cref="CspDirective"/> is supported within Content-Security-Policy-Report-Only headers, otherwise false.</param>
+	    /// <typeparam name="TBuilder">The directive builder.</typeparam>
+	    /// <returns>The current policy builder.</returns>
+	    protected virtual ContentSecurityPolicyBuilder AddDirective<TBuilder>(
             string directiveName, 
-            Action<TBuilder> configureDirective, 
-            bool supportsMetaTag = true,
+            Action<TBuilder> configureDirective,
+            CspDirectiveType type = CspDirectiveType.Fetch,
+			bool supportsMetaTag = true,
             bool supportsReportHeader = true) where TBuilder : CspDirectiveBuilder, new()
         {
             if (directiveName == null)
@@ -225,6 +236,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             configureDirective?.Invoke(directiveBuilder);
 
             var directive = directiveBuilder.Build();
+	        directive.Type = type;
             directive.SupportsMetaTag = supportsMetaTag;
             directive.SupportsReportHeader = supportsReportHeader;
 
@@ -233,9 +245,19 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             return this;
         }
 
-        protected virtual ContentSecurityPolicyBuilder AddDirective(
+		/// <summary>
+		/// Adds a directive to the <see cref="ContentSecurityPolicy"/>.
+		/// </summary>
+		/// <param name="directiveName">The name of the directive.</param>
+		/// <param name="values">The source list for the directive.</param>
+		/// <param name="type">The type of the directive.</param>
+		/// <param name="supportsMetaTag">True if the <see cref="CspDirective"/> is supported within HTML meta tags, otherwise false.</param>
+		/// <param name="supportsReportHeader">True if this <see cref="CspDirective"/> is supported within Content-Security-Policy-Report-Only headers, otherwise false.</param>
+		/// <returns>The current policy builder.</returns>
+		protected virtual ContentSecurityPolicyBuilder AddDirective(
             string directiveName, 
             IEnumerable<string> values = null,
+			CspDirectiveType type = CspDirectiveType.Fetch,
             bool supportsMetaTag = true,
             bool supportsReportHeader = true)
         {
@@ -246,6 +268,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
             var directive = new CspDirective
             {
+				Type = type,
                 SupportsMetaTag = supportsMetaTag,
                 SupportsReportHeader = supportsReportHeader
             };

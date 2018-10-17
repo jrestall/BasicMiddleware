@@ -22,9 +22,10 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             
             SupportsMetaTag = true;
             SupportsReportHeader = true;
+	        Type = CspDirectiveType.Other;
         }
 
-        /// <summary>
+	    /// <summary>
         /// Creates a new instance of the <see cref="CspDirective"/>.
         /// </summary>
         /// <param name="directive">The policy which will be used to initialize the new directive.</param>
@@ -33,10 +34,15 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             Copy(directive);
         }
 
-        /// <summary>
-        /// True if this <see cref="CspDirective"/> is supported within HTML meta tags, otherwise false.
-        /// </summary>
-        public bool SupportsMetaTag { get; set; }
+	    /// <summary>
+	    /// The directive type of this this <see cref="CspDirective"/>.
+	    /// </summary>
+	    public CspDirectiveType Type { get; set; }
+
+		/// <summary>
+		/// True if this <see cref="CspDirective"/> is supported within HTML meta tags, otherwise false.
+		/// </summary>
+		public bool SupportsMetaTag { get; set; }
 
         /// <summary>
         /// True if this <see cref="CspDirective"/> is supported within Content-Security-Policy-Report-Only headers, otherwise false.
@@ -65,13 +71,25 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
                 throw new ArgumentNullException(nameof(values));
             }
 
+			// Always replace a 'none' source if other sources are being appended 
+			// since a 'none' source would cancel out any other source.
+	        if (_directiveValue.ToString().Contains("'none'"))
+	        {
+		        _directiveValue.Clear();
+	        }
+
             var separator = " ";
             if (_directiveValue.Length == 0) separator = string.Empty;
 
             _directiveValue.Append(separator + string.Join(" ", values));
         }
 
-        public void AppendQuoted(params string[] values)
+		/// <summary>
+		/// Adds the given sources to the directive value by first wrapping each in single quotes.
+		/// </summary>
+		/// <param name="values">The sources to be added.</param>
+		/// <remarks>Directive values should only contain whitespace and visible characters, excluding ";" and ",".</remarks>
+		public void AppendQuoted(params string[] values)
         {
             foreach (var value in values)
             {
@@ -79,13 +97,13 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             }
         }
 
-        /// <summary>
-        /// Returns a <see cref="System.String" /> that represents this instance.
-        /// </summary>
-        /// <returns>
-        /// A <see cref="System.String" /> that represents this instance.
-        /// </returns>
-        public override string ToString()
+		/// <summary>
+		/// Returns a <see cref="string" /> that represents this instance.
+		/// </summary>
+		/// <returns>
+		/// A <see cref="string" /> that represents this instance.
+		/// </returns>
+		public override string ToString()
         {
             var builder = new StringBuilder();
             builder.Append("Value: ");
@@ -96,18 +114,23 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             builder.Append(SupportsReportHeader);
             builder.Append(", AddNonce: ");
             builder.Append(AddNonce);
-            return builder.ToString();
+	        builder.Append(", Type: ");
+	        builder.Append(Type.ToString());
+			return builder.ToString();
         }
 
         /// <summary>
         /// Copies the given <paramref name="directive"/> to the existing properties in the current directive.
         /// </summary>
         /// <param name="directive">The directive which will be copied.</param>
-        private void Copy(CspDirective directive)
+        public void Copy(CspDirective directive)
         {
-            _directiveValue = new StringBuilder(directive.Value);
+	        if (directive == null) throw new ArgumentNullException(nameof(directive));
 
-            SupportsMetaTag = directive.SupportsMetaTag;
+	        Append(directive.Value);
+
+	        Type = directive.Type;
+			SupportsMetaTag = directive.SupportsMetaTag;
             SupportsReportHeader = directive.SupportsReportHeader;
             AddNonce = directive.AddNonce;
         }

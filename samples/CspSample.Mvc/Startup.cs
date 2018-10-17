@@ -112,11 +112,11 @@ namespace CspSample.Mvc
         {
             public void Configure (CspOptions options)
             {
-                var policy = options.GetPolicy("Policy1");
-                policy.Append(policy => 
+                var currentPolicy = options.GetPolicy("Policy1");
+	            currentPolicy.Append(policy => 
                     policy.AddScriptSrc(src => src.AllowHost("myblog.blogs.com"))
                 );
-                policy.Override(policy => 
+	            currentPolicy.Override(policy => 
                     policy.AddStyleSrc(src => src.AllowHost("myblog.blogs.com"))
                 );
             }
@@ -128,8 +128,8 @@ namespace CspSample.Mvc
             {
                 //if (context.User.HasClaim(c => c.Type == ClaimTypes.TrialUser))
                 //{
-                    var policy = options.GetPolicy("Policy1");
-                    policy.Override(policy => 
+                    var currentPolicy = options.GetPolicy("Policy1");
+					currentPolicy.Override(policy => 
                         policy.AddDefaultSrc(src => src.AllowHost("trial.company.com"))
                     );
                 //}

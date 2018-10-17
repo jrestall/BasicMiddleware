@@ -3,7 +3,7 @@
 
 namespace Microsoft.AspNetCore.Csp.Infrastructure
 {
-    public static class CspDirectiveNames
+	public static class CspDirectiveNames
     {
         // Fetch Directives
         public const string ConnectSrc = "connect-src";
