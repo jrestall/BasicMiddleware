@@ -11,7 +11,7 @@ namespace Microsoft.AspNetCore.Csp
     public class OverrideCspAttribute : Attribute, IOverrideCspAttribute
     {
         /// <summary>
-        /// Creates a new instance of the <see cref="OverrideCspAttribute"/> with the supplied policy names.
+        /// Creates a new instance of the <see cref="OverrideCspAttribute"/> with the supplied policy name.
         /// </summary>
         /// <param name="policyName">The name of the policy to be overriden.</param>
         public OverrideCspAttribute(string policyName)
