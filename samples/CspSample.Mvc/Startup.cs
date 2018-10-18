@@ -31,7 +31,6 @@ namespace CspSample.Mvc
                         src.AllowSelf();
                         src.AllowEval();
                         src.AllowHash("sha256-qznLcsROx4GACP2dm0UCKCzCG+HiZ1guq6ZZDob/Tng=");
-                        src.UseStrictDynamic();
                     })
                     .AddScriptSrc(src => src.AddNonce())
                     .AddStyleSrc(src => src.AddNonce())
@@ -92,7 +91,7 @@ namespace CspSample.Mvc
                     policy.AddScriptSrc(src => src.AllowHost("myblog.blogs.com"))
                 );
 	            currentPolicy.Override(policy => 
-                    policy.AddStyleSrc(src => src.AllowHost("myblog.blogs.com"))
+                    policy.ReportOnly()
                 );
             }
         }
@@ -104,7 +103,7 @@ namespace CspSample.Mvc
                 //if (context.User.HasClaim(c => c.Type == ClaimTypes.TrialUser))
                 //{
                     var currentPolicy = options.GetPolicy("Policy1");
-					currentPolicy.Override(policy => 
+					currentPolicy.Append(policy => 
                         policy.AddDefaultSrc(src => src.AllowHost("trial.company.com"))
                     );
                 //}

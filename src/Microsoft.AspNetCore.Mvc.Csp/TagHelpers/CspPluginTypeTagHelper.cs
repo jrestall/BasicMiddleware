@@ -16,7 +16,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
     {
         private const string ObjectTag = "object";
         private const string EmbedTag = "embed";
-        private const string TypeAttributeName = "type";
+        private const string TypeAttributeName = "asp-type";
 
         private readonly IActivePoliciesProvider _policyProvider;
 
@@ -51,7 +51,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             var pluginTypes = policy.GetOrAddDirective(CspDirectiveNames.PluginTypes);
             pluginTypes.Append(Type);
 
-            output.Attributes.SetAttribute(TypeAttributeName, Type);
+            output.Attributes.SetAttribute("type", Type);
         }
     }
 }

@@ -52,7 +52,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <summary>
         /// True if this <see cref="CspDirective"/> should have a nonce, otherwise false.
         /// </summary>
-        public bool AddNonce { get; set; }
+        public bool? AddNonce { get; set; }
 
         /// <summary>
         /// The concatenated set of non-empty strings.
@@ -132,7 +132,11 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 	        Type = directive.Type;
 			SupportsMetaTag = directive.SupportsMetaTag;
             SupportsReportHeader = directive.SupportsReportHeader;
-            AddNonce = directive.AddNonce;
+
+            if (directive.AddNonce.HasValue)
+            {
+                AddNonce = directive.AddNonce;
+            }     
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         public CspHeader GetHeader(HttpContext httpContext, ContentSecurityPolicy policy, bool supportMetaTag = false)
         {
             var headerName = GetHeaderName(policy.ReportOnly);
-            var headerValue = GetHeaderValue(httpContext, policy, policy.ReportOnly);
+            var headerValue = GetHeaderValue(httpContext, policy, supportMetaTag);
 
             _logger?.PolicySuccess();
 
@@ -71,7 +71,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
                 }
                     
                 // Add a nonce to the end of the directive
-                if (directive.AddNonce)
+                if (directive.AddNonce == true)
                 {
                     var nonce = _nonceProvider.GetNonce(httpContext);
                     builder.Append($" 'nonce-{nonce}'");

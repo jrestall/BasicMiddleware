@@ -1,7 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Csp.Infrastructure;
 using Microsoft.AspNetCore.Html;
@@ -56,15 +55,16 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
                 return;
             }
 
+            // Clear the contents of the "meta" element since we want to render multiple below.
+            output.SuppressOutput();
+
             // TODO: This likely doesn't include policy changes made later in the pipeline.
             var policies = await _policyProvider.GetActivePoliciesAsync(ViewContext.HttpContext);
             foreach (var policy in policies)
             {
                 var header = _cspHeaderBuilder.GetHeader(ViewContext.HttpContext, policy, supportMetaTag: true);
-
-                output.Attributes.SetAttribute("http-equiv", header.Name);
-                output.Attributes.SetAttribute(ContentAttributeName, new HtmlString(header.Value));
-            }     
+                output.PostElement.AppendHtml($"<meta http-equiv=\"{header.Name}\" content=\"{header.Value}\">");
+            }
         }
     }
 }
