@@ -67,7 +67,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             => AddDirective(CspDirectiveNames.FrameSrc, configureDirective);
 
         /// <summary>
-        /// Adds a image-src directive to the <see cref="ContentSecurityPolicy"/>.
+        /// Adds a img-src directive to the <see cref="ContentSecurityPolicy"/>.
         /// </summary>
         /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
         /// <returns>The current policy builder.</returns>

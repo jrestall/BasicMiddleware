@@ -10,7 +10,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         public const string DefaultSrc = "default-src";
         public const string FontSrc = "font-src";
         public const string FrameSrc = "frame-src";
-        public const string ImageSrc = "image-src";
+        public const string ImageSrc = "img-src";
         public const string ManifestSrc = "manifest-src";
         public const string MediaSrc = "media-src";
         public const string ObjectSrc = "object-src";
