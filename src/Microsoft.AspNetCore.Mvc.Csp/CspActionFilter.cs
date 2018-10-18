@@ -19,7 +19,8 @@ namespace Microsoft.AspNetCore.Mvc.Csp
     /// </summary>
     public class CspActionFilter : ICspActionFilter
     {
-        private readonly IActivePoliciesProvider _policyProvider;
+        private readonly ICspProvider _policyProvider;
+        private readonly IActivePoliciesProvider _activePolicyProvider;
         private readonly ICspHeaderBuilder _cspHeaderBuilder;
         private readonly ILogger _logger;
 
@@ -27,9 +28,10 @@ namespace Microsoft.AspNetCore.Mvc.Csp
         /// Creates a new instance of <see cref="CspActionFilter"/>.
         /// </summary>
         /// <param name="policyProvider">The <see cref="ICspProvider"/>.</param>
+        /// <param name="activePolicyProvider"></param>
         /// <param name="cspHeaderBuilder">The <see cref="ICspHeaderBuilder"/> that builds the header.</param>
-        public CspActionFilter(IActivePoliciesProvider policyProvider, ICspHeaderBuilder cspHeaderBuilder)
-            : this(policyProvider, cspHeaderBuilder, NullLoggerFactory.Instance)
+        public CspActionFilter(ICspProvider policyProvider, IActivePoliciesProvider activePolicyProvider, ICspHeaderBuilder cspHeaderBuilder)
+            : this(policyProvider, activePolicyProvider, cspHeaderBuilder, NullLoggerFactory.Instance)
         {
         }
 
@@ -37,16 +39,23 @@ namespace Microsoft.AspNetCore.Mvc.Csp
         /// Creates a new instance of <see cref="CspActionFilter"/>.
         /// </summary>
         /// <param name="policyProvider">The <see cref="ICspProvider"/>.</param>
+        /// <param name="activePolicyProvider"></param>
         /// <param name="cspHeaderBuilder">The <see cref="ICspHeaderBuilder"/> that builds the header.</param>
         /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>
         public CspActionFilter(
-            IActivePoliciesProvider policyProvider,
+            ICspProvider policyProvider,
+            IActivePoliciesProvider activePolicyProvider,
             ICspHeaderBuilder cspHeaderBuilder,
             ILoggerFactory loggerFactory)
         {
             if (policyProvider == null)
             {
                 throw new ArgumentNullException(nameof(policyProvider));
+            }
+
+            if (activePolicyProvider == null)
+            {
+                throw new ArgumentNullException(nameof(activePolicyProvider));
             }
 
             if (cspHeaderBuilder == null)
@@ -60,6 +69,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp
             }
 
             _policyProvider = policyProvider;
+            _activePolicyProvider = activePolicyProvider;
             _cspHeaderBuilder = cspHeaderBuilder;
             _logger = loggerFactory.CreateLogger(GetType());
         }
@@ -68,6 +78,16 @@ namespace Microsoft.AspNetCore.Mvc.Csp
         /// The policy names used to fetch the active list of <see cref="ContentSecurityPolicy"/>.
         /// </summary>
         public string[] PolicyNames { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IEnumerable<IAppendCspAttribute> AppendPolicies { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IEnumerable<IAppendCspAttribute> OverridePolicies { get; set; }
 
         /// <inheritdoc />
         // Since this filter sets the active content security policies it should run early in the pipeline.
@@ -95,33 +115,81 @@ namespace Microsoft.AspNetCore.Mvc.Csp
                 return;
             }
 
+            var modifyFilters = context.Filters
+                .Where(item => item is IModifyCspFilter)
+                .Cast<IModifyCspFilter>()
+                .ToList();
+
             // Before the action method processes, we set the current security policies for this request.
-            await _policyProvider.SetActivePoliciesAsync(context.HttpContext, PolicyNames);
+            await _activePolicyProvider.SetActivePoliciesAsync(context.HttpContext, PolicyNames);
 
             if (!context.HttpContext.Response.HasStarted)
             {
-                context.HttpContext.Response.OnStarting(state =>
+                // Set the HTTP header just as the response is being sent, so that other
+                // code has a chance to modify the policies before the final header is sent. 
+                context.HttpContext.Response.OnStarting(async state =>
                     {
                         var httpContext = (HttpContext) state;
 
-                        var policies = httpContext.Items[nameof(DefaultActivePoliciesProvider)] as IEnumerable<ContentSecurityPolicy>;
-                        if (policies == null)
+                        // Get active policies for current response
+                        var activePolicies = httpContext.Items[nameof(DefaultActivePoliciesProvider)] as IDictionary<string, ContentSecurityPolicy>;
+                        if (activePolicies == null)
                         {
-                            return Task.CompletedTask;
+                            return;
                         }
 
-                        foreach (var policy in policies)
+                        // Modify active policies with any append & override filters
+                        await ModifyPolicies(activePolicies, modifyFilters, httpContext);
+
+                        // Output the Content-Security-Policy headers
+                        foreach (var policy in activePolicies)
                         {
-                            var header = _cspHeaderBuilder.GetHeader(context.HttpContext, policy);
+                            var header = _cspHeaderBuilder.GetHeader(context.HttpContext, policy.Value);
                             context.HttpContext.Response.Headers.Append(header.Name, header.Value);
                         }
-
-                        return Task.CompletedTask;
                     },
                     state: context.HttpContext);
             }
 
             await next();
+        }
+
+        private async Task ModifyPolicies(
+            IDictionary<string, ContentSecurityPolicy> activePolicies,
+            IEnumerable<IModifyCspFilter> modifyFilters,
+            HttpContext httpContext)
+        {
+            foreach (var modifyFilter in modifyFilters)
+            {
+                var appendPolicy = await _policyProvider.GetPolicyAsync(httpContext, modifyFilter.PolicyName);
+                if (appendPolicy == null)
+                {
+                    // TODO: Throw error since this is an invalid configuration.
+                    return;
+                }
+
+                var targetPolicies = GetTargetPolicies(activePolicies, modifyFilter.Targets);
+                foreach (var targetPolicy in targetPolicies)
+                {
+                    targetPolicy.Copy(appendPolicy, modifyFilter.OverrideDirectives);
+                }
+            }
+        }
+
+        private IEnumerable<ContentSecurityPolicy> GetTargetPolicies(IDictionary<string, ContentSecurityPolicy> activePolicies, string targets)
+        {
+            // When no targets are provided we target the first active policy.
+            if (string.IsNullOrEmpty(targets))
+            {
+                return activePolicies
+                    .Take(1)
+                    .Select(x => x.Value);             
+            }
+
+            var policyNames = targets.Split(',').Select(t => t.Trim()).ToList();
+            return activePolicies
+                .Where(policy => policyNames.Contains(policy.Key))
+                .Select(x => x.Value);
         }
     }
 }

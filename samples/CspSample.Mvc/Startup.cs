@@ -21,36 +21,6 @@ namespace CspSample.Mvc
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // services.AddHeaders(options =>
-            //     options.AddPolicy("SecureDefault", builder => builder
-            //         .AddXFrameOptions(Deny)
-            //         .AddXSSProtection(EnableAndBlock)
-            //         .AddContentType(NoSniff)
-            //         .ReferrerPolicy(NoReferrer)
-            //         .AddHeader("X-Permitted-Cross-Domain-Policies", "noopen")
-            //         .AddHeader("X-Download-Options", "noopen")
-            //         .AddHeader("X-Powered-By", "OrchardCore")
-            //         .RemoveHeader("Server")
-            //     )
-            //     options.AppendPolicy("SecureDefault", builder => builder
-            //         .AddXFrameOptions(Deny)
-            //     )
-            //     options.ConfigurePolicy(policy => policy.)
-            // );
-
-            // services.AddFeaturePolicy(options =>
-            //     options.AddPolicy("DefaultFeature", features => features
-            //         .AddCamera()
-            //         .AddVibration(src => src.None())
-            //         .AddPayments(src =>
-            //         {
-            //             src.AllowSelf();
-            //             src.AllowHost("https://example.com");
-            //         })
-            //         .AddMicrophone()
-            //     )
-            // );
-
             services.AddCsp(options =>
             {
                 options.AddPolicy("Policy1", policy => policy
@@ -78,7 +48,12 @@ namespace CspSample.Mvc
                     policy.AddDefaultSrc(src => src.AllowNone().AddNonce())
                 );
 
+                options.AddPolicy("BetaUsers", policy =>
+                    policy.AddDefaultSrc(src => src.AllowHost("beta-testers.example.org"))
+                );
+
                 options.AddPolicy("SubresourceIntegrityPolicy", policy => policy
+                    .AddDefaultSrc(src => src.AllowHost("example.org"))
                     .RequireSubresourceIntegrity(Subresource.Script, Subresource.Style)
                     .AddScriptSrc(src =>
                     {

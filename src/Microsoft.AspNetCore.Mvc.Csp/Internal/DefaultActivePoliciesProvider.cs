@@ -40,14 +40,19 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
                 throw new ArgumentNullException(nameof(httpContext));
             }
 
-            var activePolicies = httpContext.Items[nameof(DefaultActivePoliciesProvider)] as IEnumerable<ContentSecurityPolicy>;
-            return Task.FromResult(activePolicies);
+            var activePolicies = httpContext.Items[nameof(DefaultActivePoliciesProvider)] as Dictionary<string, ContentSecurityPolicy>;
+            if (activePolicies == null)
+            {
+                return Task.FromResult(Enumerable.Empty<ContentSecurityPolicy>());
+            }
+            
+            return Task.FromResult(activePolicies.Select(x => x.Value));
         }
 
         /// <inheritdoc />
         public async Task SetActivePoliciesAsync(HttpContext httpContext, IEnumerable<string> policyNames)
         {
-            var activePolicies = new List<ContentSecurityPolicy>();
+            var activePolicies = new Dictionary<string, ContentSecurityPolicy>();
             if (policyNames == null)
             {
                 await CopyPolicyToActiveListAsync(httpContext, activePolicies, null);     
@@ -63,12 +68,13 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
             httpContext.Items[nameof(DefaultActivePoliciesProvider)] = activePolicies;
         }
 
-        private async Task CopyPolicyToActiveListAsync(HttpContext httpContext, List<ContentSecurityPolicy> activePolicies, string policyName)
+        private async Task CopyPolicyToActiveListAsync(HttpContext httpContext, Dictionary<string, ContentSecurityPolicy> activePolicies, string policyName)
         {
             var configuredPolicy = await _policyProvider.GetPolicyAsync(httpContext, policyName);
             if (configuredPolicy == null)
             {
-                var errorMessage = "todo";
+                // TODO: Proper error message.
+                var errorMessage = "CSP was enabled but no default content security policy has been configured.";
                 /*var errorMessage = policyName == null
                     ? Resources.FormatActivePoliciesProvider_MissingDefaultCspPolicy()
                     : Resources.FormatActivePoliciesProvider_MissingCspPolicy(policyName);*/
@@ -77,7 +83,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
             }
 
             var activePolicy = new ContentSecurityPolicy(configuredPolicy);
-            activePolicies.Add(activePolicy);
+            activePolicies.Add(policyName ?? "__DefaultContentSecurityPolicy", activePolicy);
         }
     }
 }

@@ -165,7 +165,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 	    /// </summary>
 	    /// <param name="policy">The policy which needs to be copied.</param>
 	    /// <param name="overrideDirectives"></param>
-	    private void Copy(ContentSecurityPolicy policy, bool overrideDirectives = false)
+	    public void Copy(ContentSecurityPolicy policy, bool overrideDirectives = false)
         {
             if (policy == null)
             {
@@ -187,9 +187,12 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 		            var directiveAppend = GetOrAddDirective(directive.Key);
 
 					// The value of default-src is joined with the addition if it is a fetch directive. 
-			        AppendDefaultSrc(directive.Key, directiveAppend, Directives[CspDirectiveNames.DefaultSrc]);
+	                if (Directives.ContainsKey(CspDirectiveNames.DefaultSrc))
+	                {
+	                    AppendDefaultSrc(directive.Key, directiveAppend, Directives[CspDirectiveNames.DefaultSrc]);
+	                }
 
-		            // Append: script-src 'self' -> script-src 'self' example.org
+	                // Append: script-src 'self' -> script-src 'self' example.org
 					directiveAppend.Copy(directive.Value);
 				}
             }

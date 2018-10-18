@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Csp.Reports;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace CspSample.Mvc.Controllers
@@ -33,10 +32,7 @@ namespace CspSample.Mvc.Controllers
         }
 
         [EnableCsp("Policy1", "Policy2")]
-        //[AppendCsp("BetaUsers", Targets = "Policy1, Policy2")]
-        //[OverrideCsp("BetaUsers2", Targets = "Policy1")]
-        //[AppendCspDirective("script-src", "'self'", Targets = "Policy1")]
-        //[OverrideCspDirective("script-src", "'self'")]
+        [AppendCsp("BetaUsers", Targets = "Policy1, Policy2")]
         public IActionResult EnableNamedMultiple()
         {
             ViewData["Message"] = "Policy1 and Policy2 are enabled.";
@@ -45,6 +41,7 @@ namespace CspSample.Mvc.Controllers
         }
 
         [EnableCsp("SubresourceIntegrityPolicy")]
+        [OverrideCsp("BetaUsers")]
         public IActionResult SubresourceIntegrity()
         {
             ViewData["Message"] = "SubresourceIntegrityPolicy is enabled.";

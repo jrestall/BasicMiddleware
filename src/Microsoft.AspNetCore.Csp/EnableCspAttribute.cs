@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Csp.Infrastructure;
 
 namespace Microsoft.AspNetCore.Csp
 {
-    /// <inheritdoc />
+    /// <inheritdoc cref="IEnableCspAttribute" />
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
     public class EnableCspAttribute : Attribute, IEnableCspAttribute
     {
@@ -22,7 +22,7 @@ namespace Microsoft.AspNetCore.Csp
         /// <summary>
         /// Creates a new instance of the <see cref="EnableCspAttribute"/> with the supplied policy names.
         /// </summary>
-        /// <param name="policyNames">The name of the policy to be applied.</param>
+        /// <param name="policyNames">The name of the policies to be applied.</param>
         public EnableCspAttribute(params string[] policyNames)
         {
             PolicyNames = policyNames;

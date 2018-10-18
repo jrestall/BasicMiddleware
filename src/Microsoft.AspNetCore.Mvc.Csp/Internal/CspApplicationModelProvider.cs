@@ -29,7 +29,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
             }
 
             foreach (var controllerModel in context.Result.Controllers)
-            {
+            { 
                 var enableCsp = controllerModel.Attributes.OfType<IEnableCspAttribute>().FirstOrDefault();
                 if (enableCsp != null)
                 {
@@ -40,6 +40,19 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
                 if (disableCsp != null)
                 {
                     controllerModel.Filters.Add(new DisableCspFilter());
+                }
+
+                // TODO: Add all of the attributes instead of just the first.
+                var appendCsp = controllerModel.Attributes.OfType<IAppendCspAttribute>().FirstOrDefault();
+                if (appendCsp != null)
+                {
+                    controllerModel.Filters.Add(new ModifyCspFilter(appendCsp.PolicyName, appendCsp.Targets, false));
+                }
+
+                var overrideCsp = controllerModel.Attributes.OfType<IOverrideCspAttribute>().FirstOrDefault();
+                if (overrideCsp != null)
+                {
+                    controllerModel.Filters.Add(new ModifyCspFilter(overrideCsp.PolicyName, overrideCsp.Targets, true));
                 }
 
                 foreach (var actionModel in controllerModel.Actions)
@@ -54,6 +67,19 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
                     if (disableCsp != null)
                     {
                         actionModel.Filters.Add(new DisableCspFilter());
+                    }
+
+                    // TODO: Add all of the attributes instead of just the first.
+                    appendCsp = actionModel.Attributes.OfType<IAppendCspAttribute>().FirstOrDefault();
+                    if (appendCsp != null)
+                    {
+                        actionModel.Filters.Add(new ModifyCspFilter(appendCsp.PolicyName, appendCsp.Targets, false));
+                    }
+
+                    overrideCsp = actionModel.Attributes.OfType<IOverrideCspAttribute>().FirstOrDefault();
+                    if (overrideCsp != null)
+                    {
+                        actionModel.Filters.Add(new ModifyCspFilter(overrideCsp.PolicyName, overrideCsp.Targets, true));
                     }
                 }
             }
