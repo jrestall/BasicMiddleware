@@ -11,7 +11,7 @@ namespace Microsoft.AspNetCore.Csp
     public class AppendCspAttribute : Attribute, IAppendCspAttribute
     {
         /// <summary>
-        /// Creates a new instance of the <see cref="AppendCspAttribute"/> with the supplied policy names.
+        /// Creates a new instance of the <see cref="AppendCspAttribute"/> with the supplied policy name.
         /// </summary>
         /// <param name="policyName">The name of the policy to be appended.</param>
         public AppendCspAttribute(string policyName)
