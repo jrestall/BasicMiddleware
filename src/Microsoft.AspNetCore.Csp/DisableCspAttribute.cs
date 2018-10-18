@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Csp.Infrastructure;
 
 namespace Microsoft.AspNetCore.Csp
 {
-    /// <inheritdoc />
+    /// <inheritdoc cref="IDisableCspAttribute" />
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public class DisableCspAttribute : Attribute, IDisableCspAttribute
     {

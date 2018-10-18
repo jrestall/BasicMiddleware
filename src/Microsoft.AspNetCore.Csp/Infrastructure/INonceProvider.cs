@@ -11,7 +11,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
     public interface INonceProvider
     {
         /// <summary>
-        /// Gets a base64 encoded nonce for the curent request.
+        /// Gets a base64 encoded nonce for the current request.
         /// </summary>
         /// <param name="context">The <see cref="HttpContext"/> associated with the request.</param>
         /// <returns>The base64 encoded nonce for the current request.</returns>

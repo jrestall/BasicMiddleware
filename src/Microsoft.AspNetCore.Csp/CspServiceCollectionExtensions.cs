@@ -5,6 +5,7 @@ using System;
 using Microsoft.AspNetCore.Csp.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
+// ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>

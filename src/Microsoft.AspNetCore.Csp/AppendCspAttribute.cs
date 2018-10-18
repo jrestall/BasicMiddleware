@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Csp.Infrastructure;
 
 namespace Microsoft.AspNetCore.Csp
 {
-    /// <inheritdoc />
+    /// <inheritdoc cref="IAppendCspAttribute" />
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
     public class AppendCspAttribute : Attribute, IAppendCspAttribute
     {

@@ -1,3 +1,6 @@
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 using Microsoft.AspNetCore.Http;
 
 namespace Microsoft.AspNetCore.Csp.Infrastructure
@@ -16,6 +19,4 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <returns>The <see cref="CspHeader"/> that represents the <paramref name="policy"/>.</returns>
         CspHeader GetHeader(HttpContext httpContext, ContentSecurityPolicy policy, bool supportMetaTag = false);
     }
-
-    // <inheritdoc />
 }

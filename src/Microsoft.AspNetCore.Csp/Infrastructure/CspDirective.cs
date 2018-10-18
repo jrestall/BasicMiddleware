@@ -11,7 +11,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
     /// </summary>
     public class CspDirective
     {
-        private StringBuilder _directiveValue;
+        private readonly StringBuilder _directiveValue;
 
         /// <summary>
         /// Creates a new instance of the <see cref="CspDirective"/>.
