@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 namespace Microsoft.AspNetCore.Mvc.Csp.Internal
 {
     /// <summary>
-    /// A filter that prevents content security policies being returned, disabling <see cref="ICspActionFilter"/>s.
+    /// A filter that prevents content security policies being returned, disabling <see cref="ICspAuthorizationFilter"/>s.
     /// </summary>
     public interface IDisableCspFilter : IFilterMetadata
     {

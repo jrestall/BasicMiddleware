@@ -17,7 +17,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp
     /// <summary>
     /// A filter that applies the given <see cref="ContentSecurityPolicy"/> and adds appropriate response headers.
     /// </summary>
-    public class CspActionFilter : ICspActionFilter
+    public class CspAuthorizationFilter : ICspAuthorizationFilter
     {
         private readonly ICspProvider _policyProvider;
         private readonly IActivePoliciesProvider _activePolicyProvider;
@@ -25,24 +25,24 @@ namespace Microsoft.AspNetCore.Mvc.Csp
         private readonly ILogger _logger;
 
         /// <summary>
-        /// Creates a new instance of <see cref="CspActionFilter"/>.
+        /// Creates a new instance of <see cref="CspAuthorizationFilter"/>.
         /// </summary>
         /// <param name="policyProvider">The <see cref="ICspProvider"/>.</param>
         /// <param name="activePolicyProvider"></param>
         /// <param name="cspHeaderBuilder">The <see cref="ICspHeaderBuilder"/> that builds the header.</param>
-        public CspActionFilter(ICspProvider policyProvider, IActivePoliciesProvider activePolicyProvider, ICspHeaderBuilder cspHeaderBuilder)
+        public CspAuthorizationFilter(ICspProvider policyProvider, IActivePoliciesProvider activePolicyProvider, ICspHeaderBuilder cspHeaderBuilder)
             : this(policyProvider, activePolicyProvider, cspHeaderBuilder, NullLoggerFactory.Instance)
         {
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="CspActionFilter"/>.
+        /// Creates a new instance of <see cref="CspAuthorizationFilter"/>.
         /// </summary>
         /// <param name="policyProvider">The <see cref="ICspProvider"/>.</param>
         /// <param name="activePolicyProvider"></param>
         /// <param name="cspHeaderBuilder">The <see cref="ICspHeaderBuilder"/> that builds the header.</param>
         /// <param name="loggerFactory">The <see cref="ILoggerFactory"/>.</param>
-        public CspActionFilter(
+        public CspAuthorizationFilter(
             ICspProvider policyProvider,
             IActivePoliciesProvider activePolicyProvider,
             ICspHeaderBuilder cspHeaderBuilder,
@@ -79,23 +79,12 @@ namespace Microsoft.AspNetCore.Mvc.Csp
         /// </summary>
         public string[] PolicyNames { get; set; }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public IEnumerable<IAppendCspAttribute> AppendPolicies { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public IEnumerable<IAppendCspAttribute> OverridePolicies { get; set; }
-
         /// <inheritdoc />
         // Since this filter sets the active content security policies it should run early in the pipeline.
         public int Order => int.MinValue + 80;
 
-        public async Task OnActionExecutionAsync(
-            ActionExecutingContext context,
-            ActionExecutionDelegate next)
+        /// <inheritdoc />
+        public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
             if (context == null)
             {
@@ -103,9 +92,9 @@ namespace Microsoft.AspNetCore.Mvc.Csp
             }
 
             // If this filter is not closest to the action, it is not applicable.
-            if (!context.IsEffectivePolicy<ICspActionFilter>(this))
+            if (!context.IsEffectivePolicy<ICspAuthorizationFilter>(this))
             {
-                _logger.NotMostEffectiveFilter(typeof(ICspActionFilter));
+                _logger.NotMostEffectiveFilter(typeof(ICspAuthorizationFilter));
                 return;
             }
 
@@ -139,7 +128,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp
                         }
 
                         // Modify active policies with any append & override filters
-                        await ModifyPolicies(activePolicies, modifyFilters, httpContext);
+                        await ModifyActivePolicies(activePolicies, modifyFilters, httpContext);
 
                         // Output the Content-Security-Policy headers
                         foreach (var policy in activePolicies)
@@ -151,10 +140,10 @@ namespace Microsoft.AspNetCore.Mvc.Csp
                     state: context.HttpContext);
             }
 
-            await next();
+            // Continue with other filters and action.
         }
 
-        private async Task ModifyPolicies(
+        private async Task ModifyActivePolicies(
             IDictionary<string, ContentSecurityPolicy> activePolicies,
             IEnumerable<IModifyCspFilter> modifyFilters,
             HttpContext httpContext)

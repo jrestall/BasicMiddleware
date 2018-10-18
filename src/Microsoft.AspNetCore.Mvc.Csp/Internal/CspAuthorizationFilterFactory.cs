@@ -8,17 +8,17 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Microsoft.AspNetCore.Mvc.Csp.Internal
 {
     /// <summary>
-    /// A filter factory which creates a new instance of <see cref="CspActionFilter"/>.
+    /// A filter factory which creates a new instance of <see cref="CspAuthorizationFilter"/>.
     /// </summary>
-    public class CspActionFilterFactory : IFilterFactory, IOrderedFilter
+    public class CspAuthorizationFilterFactory : IFilterFactory, IOrderedFilter
     {
         private readonly string[] _policyNames;
 
         /// <summary>
-        /// Creates a new instance of <see cref="CspActionFilterFactory"/>.
+        /// Creates a new instance of <see cref="CspAuthorizationFilterFactory"/>.
         /// </summary>
         /// <param name="policyNames">Names used to fetch the content security policies.</param>
-        public CspActionFilterFactory(params string[] policyNames)
+        public CspAuthorizationFilterFactory(params string[] policyNames)
         {
             _policyNames = policyNames;
         }
@@ -39,7 +39,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
                 throw new ArgumentNullException(nameof(serviceProvider));
             }
 
-            var filter = serviceProvider.GetRequiredService<CspActionFilter>();
+            var filter = serviceProvider.GetRequiredService<CspAuthorizationFilter>();
             filter.PolicyNames = _policyNames;
 
             return filter;

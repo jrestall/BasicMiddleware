@@ -33,7 +33,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
                 var enableCsp = controllerModel.Attributes.OfType<IEnableCspAttribute>().FirstOrDefault();
                 if (enableCsp != null)
                 {
-                    controllerModel.Filters.Add(new CspActionFilterFactory(enableCsp.PolicyNames));
+                    controllerModel.Filters.Add(new CspAuthorizationFilterFactory(enableCsp.PolicyNames));
                 }
 
                 var disableCsp = controllerModel.Attributes.OfType<IDisableCspAttribute>().FirstOrDefault();
@@ -60,7 +60,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
                     enableCsp = actionModel.Attributes.OfType<IEnableCspAttribute>().FirstOrDefault();
                     if (enableCsp != null)
                     {
-                        actionModel.Filters.Add(new CspActionFilterFactory(enableCsp.PolicyNames));
+                        actionModel.Filters.Add(new CspAuthorizationFilterFactory(enableCsp.PolicyNames));
                     }
 
                     disableCsp = actionModel.Attributes.OfType<IDisableCspAttribute>().FirstOrDefault();

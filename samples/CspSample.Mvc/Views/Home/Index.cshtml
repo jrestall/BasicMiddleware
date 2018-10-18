@@ -3,10 +3,9 @@
     ViewData["Title"] = "Home Page";
 }
 
-
 <html>
 <head>
-
+    <meta http-equiv="Content-Security-Policy" />
 </head>
 <body>
     <div>
@@ -26,7 +25,10 @@
         <embed type="application/testplugintype2" />
 
         <ol>
+            <li><a asp-action="EnableNamed">Policy 1 Sample</a></li>
+            <li><a asp-action="EnableNamedMultiple">Append Sample</a></li>
             <li><a asp-action="SubresourceIntegrity">Subresource Integrity Sample</a></li>
+            <li><a asp-action="Disable">Disable Sample</a></li>
         </ol>
     </div>
 </body>

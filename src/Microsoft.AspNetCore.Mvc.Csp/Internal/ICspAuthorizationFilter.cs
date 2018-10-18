@@ -8,7 +8,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.Internal
     /// <summary>
     /// A filter that can be used to enable/disable content security policy support for a resource.
     /// </summary>
-    public interface ICspActionFilter : IAsyncActionFilter, IOrderedFilter
+    public interface ICspAuthorizationFilter : IAsyncAuthorizationFilter, IOrderedFilter
     {
     }
 }

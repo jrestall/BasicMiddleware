@@ -42,7 +42,11 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             var policy = await _policyProvider.GetActiveMainPolicyAsync(ViewContext.HttpContext);
-            if (policy == null) return;
+            if (policy == null)
+            {
+                // No active policy for this request. CSP may be disabled.
+                return;
+            }
 
             var pluginTypes = policy.GetOrAddDirective(CspDirectiveNames.PluginTypes);
             pluginTypes.Append(Type);

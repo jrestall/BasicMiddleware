@@ -4,6 +4,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Csp.Infrastructure;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Csp.Internal;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -55,15 +56,15 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
                 return;
             }
 
-            var policy = await _policyProvider.GetActiveMainPolicyAsync(ViewContext.HttpContext);
-            //TODO: Support outputting multiple meta tags.
-            //foreach (var policy in policies)
-            //{
+            // TODO: This likely doesn't include policy changes made later in the pipeline.
+            var policies = await _policyProvider.GetActivePoliciesAsync(ViewContext.HttpContext);
+            foreach (var policy in policies)
+            {
                 var header = _cspHeaderBuilder.GetHeader(ViewContext.HttpContext, policy, supportMetaTag: true);
 
                 output.Attributes.SetAttribute("http-equiv", header.Name);
-                output.Attributes.SetAttribute(ContentAttributeName, header.Value);
-            //}     
+                output.Attributes.SetAttribute(ContentAttributeName, new HtmlString(header.Value));
+            }     
         }
     }
 }

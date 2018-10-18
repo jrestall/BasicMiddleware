@@ -86,6 +86,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CspSample.Mvc", "samples\Cs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.AspNetCore.Csp.Tests", "test\Microsoft.AspNetCore.Csp.Tests\Microsoft.AspNetCore.Csp.Tests.csproj", "{1FA10CCA-719A-4F8D-AA80-4B35117B5312}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.AspNetCore.Mvc.Csp.Test", "test\Microsoft.AspNetCore.Mvc.Csp.Test\Microsoft.AspNetCore.Mvc.Csp.Test.csproj", "{6797F8BA-7762-4062-8C53-60311CFE53B0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -184,6 +186,10 @@ Global
 		{1FA10CCA-719A-4F8D-AA80-4B35117B5312}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FA10CCA-719A-4F8D-AA80-4B35117B5312}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FA10CCA-719A-4F8D-AA80-4B35117B5312}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6797F8BA-7762-4062-8C53-60311CFE53B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6797F8BA-7762-4062-8C53-60311CFE53B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6797F8BA-7762-4062-8C53-60311CFE53B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6797F8BA-7762-4062-8C53-60311CFE53B0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -213,6 +219,7 @@ Global
 		{78B6F861-806A-4CF2-AA07-C554731557AD} = {9587FE9F-5A17-42C4-8021-E87F59CECB98}
 		{C6875576-6E1C-49D7-BDD1-0708E3B857EE} = {9587FE9F-5A17-42C4-8021-E87F59CECB98}
 		{1FA10CCA-719A-4F8D-AA80-4B35117B5312} = {8437B0F3-3894-4828-A945-A9187F37631D}
+		{6797F8BA-7762-4062-8C53-60311CFE53B0} = {8437B0F3-3894-4828-A945-A9187F37631D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4518E9CE-3680-4E05-9259-B64EA7807158}

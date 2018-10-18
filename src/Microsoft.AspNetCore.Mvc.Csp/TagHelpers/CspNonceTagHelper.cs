@@ -50,6 +50,12 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             }
 
             var policy = await _policyProvider.GetActiveMainPolicyAsync(ViewContext.HttpContext);
+            if (policy == null)
+            {
+                // No active policy for this request. CSP may be disabled.
+                return;
+            }
+
             var directiveName = context.TagName == StyleTag ? CspDirectiveNames.StyleSrc : CspDirectiveNames.ScriptSrc;
 
             // Ensure the directive is configured to return a nonce.

@@ -69,7 +69,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddEnumerable(
                 ServiceDescriptor.Transient<IApplicationModelProvider, CspApplicationModelProvider>());
             services.TryAddTransient<IActivePoliciesProvider, DefaultActivePoliciesProvider>();
-            services.TryAddTransient<CspActionFilter, CspActionFilter>();
+            services.TryAddTransient<CspAuthorizationFilter, CspAuthorizationFilter>();
         }
     }
 }

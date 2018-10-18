@@ -73,6 +73,7 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             var policy = await _policyProvider.GetActiveMainPolicyAsync(ViewContext.HttpContext);
             if (policy == null)
             {
+                // No active policy for this request. CSP may be disabled.
                 return;
             }
 

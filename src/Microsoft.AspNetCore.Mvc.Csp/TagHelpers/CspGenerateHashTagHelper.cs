@@ -84,6 +84,12 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
 
             // Get the provided hash algorithms or use the policy's defaults.
             var policy = await _policyProvider.GetActiveMainPolicyAsync(ViewContext.HttpContext);
+            if (policy == null)
+            {
+                // No active policy for this request. CSP may be disabled.
+                return;
+            }
+
             var hashAlgorithms = CspHashAlgorithms ?? policy.DefaultHashAlgorithms;
 
             // Hash the content or use cached values.
