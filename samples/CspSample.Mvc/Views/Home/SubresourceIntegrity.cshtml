@@ -1,14 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Csp.Infrastructure;
 @{
     ViewData["Title"] = "Home Page";
+    Layout = "_MainLayout";
 }
 
-
-<html>
-<head>
-
-</head>
-<body>
 <div>
     <p>@ViewData["Message"]</p>
     <p>Check the page source for scripts that have been automatically protected with subresource integrity.</p>
@@ -33,5 +28,3 @@
           asp-subresource-integrity="true"
           asp-subresource-integrity-algorithms="HashAlgorithms.SHA256 | HashAlgorithms.SHA384 | HashAlgorithms.SHA512" />
 </div>
-</body>
-</html>

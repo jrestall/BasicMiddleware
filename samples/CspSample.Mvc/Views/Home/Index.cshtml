@@ -1,35 +1,41 @@
 ﻿@using Microsoft.AspNetCore.Csp.Infrastructure;
 @{
     ViewData["Title"] = "Home Page";
+    Layout = "_MainLayout";
 }
 
-<html>
-<head>
-    <meta http-equiv="Content-Security-Policy" />
-</head>
-<body>
-    <div>
-        <p>@ViewData["Message"]</p>
-        <p>Check the page source for scripts that have had nonces and their hashes added to the policy.</p>
-        <p>There are also plugins that have automatically been added to the plugin-types directive.</p>
+<div>
+    <p>@ViewData["Message"]</p>
+    <p>Check the page source for scripts that have had nonces and their hashes added to the policy.</p>
+    <p class="green">There are also plugins that have automatically been added to the plugin-types directive.</p>
 
-        <script asp-add-nonce="true" asp-generate-hash="true" asp-generate-hash-algorithms="HashAlgorithms.SHA256 | HashAlgorithms.SHA512">
-            console.log("I'm a script that will be hashed dynamically.");
-        </script>
-        <style asp-add-nonce="true" asp-generate-hash="true">
-            p {
-                color: #0000ff;
-            }
-        </style>
-        <object asp-type="application/testplugintype1"></object>
-        <embed asp-type="application/testplugintype2" />
+    <script asp-generate-hash="true" asp-generate-hash-algorithms="HashAlgorithms.SHA256 | HashAlgorithms.SHA512">console.log("I'm a script that will be hashed dynamically.");    
+    </script>
+    <style asp-add-nonce="true" asp-generate-hash="true">
+        p {
+            color: #0000ff;
+        }
+    </style>
+    <style asp-add-nonce="true">
+        p.green {
+            color: green;
+        }
+    </style>
+    <object asp-type="application/testplugintype1"></object>
+    <embed asp-type="application/testplugintype2" />
 
-        <ol>
-            <li><a asp-action="EnableNamed">Policy 1 Sample</a></li>
-            <li><a asp-action="EnableNamedMultiple">Append Sample</a></li>
-            <li><a asp-action="SubresourceIntegrity">Subresource Integrity Sample</a></li>
-            <li><a asp-action="Disable">Disable Sample</a></li>
-        </ol>
-    </div>
-</body>
-</html>
+    <ol>
+        <li><a asp-action="EnableNamed">Policy 1 Sample</a></li>
+        <li><a asp-action="EnableNamedMultiple">Append Sample</a></li>
+        <li><a asp-action="SubresourceIntegrity">Subresource Integrity Sample</a></li>
+        <li><a asp-action="Disable">Disable Sample</a></li>
+    </ol>
+</div>
+
+@section Scripts
+{
+    <embed asp-type="application/testpluginlayout" />
+    <script asp-generate-hash="true" asp-generate-hash-algorithms="HashAlgorithms.SHA512"> 
+        console.log("I'm an inline script in the layout - my hash will be included in the header and meta tag automatically.");
+    </script>
+}

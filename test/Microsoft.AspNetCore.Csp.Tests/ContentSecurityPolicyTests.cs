@@ -16,6 +16,7 @@ namespace Microsoft.AspNetCore.Csp.Tests
 
             // Assert
             Assert.False(policy.ReportOnly);
+	        Assert.Equal(HashAlgorithms.SHA384, policy.DefaultHashAlgorithms);
             Assert.Empty(policy.Directives);
         }
 

@@ -92,8 +92,11 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
 
             var hashAlgorithms = CspHashAlgorithms ?? policy.DefaultHashAlgorithms;
 
-            // Hash the content or use cached values.
-            var hashes = await _hashProvider.GetContentHashesAsync(context.UniqueId, content.GetContent(), hashAlgorithms);
+			// TODO: Investigate why this newline replacement is necessary.
+	        var contentToHash = content.GetContent().Replace("\r\n", "\n");
+
+			// Hash the content or use cached values.
+			var hashes = await _hashProvider.GetContentHashesAsync(context.UniqueId, contentToHash, hashAlgorithms);
 
             // Update the main policy with the inline script/style hashes.
             var directiveName = output.TagName == StyleTag ? CspDirectiveNames.StyleSrc : CspDirectiveNames.ScriptSrc;

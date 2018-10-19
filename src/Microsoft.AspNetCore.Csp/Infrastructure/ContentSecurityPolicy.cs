@@ -29,7 +29,7 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
         /// <param name="policy">The policy which will be used to initialize the new policy.</param>
         public ContentSecurityPolicy(ContentSecurityPolicy policy)
         {
-            Copy(policy);
+            Copy(policy, true);
         }
 
 		/// <summary>
@@ -228,6 +228,9 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 
 			// Only Fetch directives inherit the 'default-src' directive.
 		    if (directive.Type != CspDirectiveType.Fetch) return;
+
+			// Don't append the default-src if it has already been appended.
+		    if (directive.Value.Contains(defaultDirective.Value)) return;
 
 		    directive.Append(defaultDirective.Value);
 	    }

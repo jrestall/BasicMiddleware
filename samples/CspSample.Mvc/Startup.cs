@@ -40,7 +40,6 @@ namespace CspSample.Mvc
                     {
                         src.AllowHost("http://*.example.com");
                     })
-                    .ReportOnly()
                     .DefaultHashAlgorithms(HashAlgorithms.SHA384 | HashAlgorithms.SHA512)
                 );
 
@@ -91,8 +90,11 @@ namespace CspSample.Mvc
 	            currentPolicy.Append(policy => 
                     policy.AddScriptSrc(src => src.AllowHost("myblog.blogs.com"))
                 );
-	            currentPolicy.Override(policy => 
-                    policy.ReportOnly()
+	            currentPolicy.Append(policy =>
+		            policy.AddImageSrc(src => src.AllowSelf())
+	            );
+				currentPolicy.Override(policy => 
+                    policy.DefaultHashAlgorithms(HashAlgorithms.SHA512)
                 );
             }
         }

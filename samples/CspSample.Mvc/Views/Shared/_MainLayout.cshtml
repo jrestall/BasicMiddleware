@@ -1,0 +1,10 @@
+﻿@{
+    Layout = "_Layout.cshtml";
+}
+
+<div>
+    @RenderBody()
+</div>
+
+@*A nested layout is required since the Content-Security-Policy meta tag will only pickup hashes created within nested views and layouts. *@
+@RenderSection("Scripts", false)

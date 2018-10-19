@@ -3,8 +3,8 @@
 
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Csp.Infrastructure;
-using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Csp.Internal;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
@@ -12,8 +12,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
 {
     [HtmlTargetElement("meta", 
-        Attributes = "[http-equiv=Content-Security-Policy]", 
-        ParentTag = "head", 
+        Attributes = "[http-equiv=Content-Security-Policy]",
         TagStructure = TagStructure.WithoutEndTag)]
     public class CspMetaTagHelper : TagHelper
     {
@@ -58,13 +57,13 @@ namespace Microsoft.AspNetCore.Mvc.Csp.TagHelpers
             // Clear the contents of the "meta" element since we want to render multiple below.
             output.SuppressOutput();
 
-            // TODO: This likely doesn't include policy changes made later in the pipeline.
+            // This won't include policy changes made from tag helpers in the same layout file.
             var policies = await _policyProvider.GetActivePoliciesAsync(ViewContext.HttpContext);
             foreach (var policy in policies)
             {
                 var header = _cspHeaderBuilder.GetHeader(ViewContext.HttpContext, policy, supportMetaTag: true);
                 output.PostElement.AppendHtml($"<meta http-equiv=\"{header.Name}\" content=\"{header.Value}\">");
             }
-        }
+		}
     }
 }
