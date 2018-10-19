@@ -12,11 +12,15 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
     /// </summary>
     public class ContentSecurityPolicy
     {
-        /// <summary>
+	    private bool? _reportOnly;
+	    private HashAlgorithms? _defaultHashAlgorithms;
+
+	    /// <summary>
         /// Creates a new instance of the <see cref="ContentSecurityPolicy"/>.
         /// </summary>
         public ContentSecurityPolicy()
         {
+
         }
 
         /// <summary>
@@ -33,25 +37,33 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
 		/// </summary>
 		public IDictionary<string, CspDirective> Directives { get; } = new Dictionary<string, CspDirective>();
 
-        /// <summary>
-        /// Gets or sets a value indicating whether this <see cref="ContentSecurityPolicy"/>
-        /// only reports policy violations instead of enforcing them.
-        /// </summary>
-        /// <value><c>true</c> if report only; otherwise, <c>false</c>.</value>
-        public bool ReportOnly { get; set; }
+	    /// <summary>
+	    /// Gets or sets a value indicating whether this <see cref="ContentSecurityPolicy"/>
+	    /// only reports policy violations instead of enforcing them.
+	    /// </summary>
+	    /// <value><c>true</c> if report only; otherwise, <c>false</c>.</value>
+	    public bool ReportOnly
+	    {
+		    get => _reportOnly.GetValueOrDefault(false); // Secure by default
+		    set => _reportOnly = value;
+	    }
 
-        /// <summary>
-        /// The default hash algorithms used when generating hashes for the content security policy.
-        /// The default is <see cref="HashAlgorithms.SHA384"/>.
-        /// </summary>
-        public HashAlgorithms DefaultHashAlgorithms { get; set; } = HashAlgorithms.SHA384;
-        
-        /// <summary>
-        /// Adds a new policy directive.
-        /// </summary>
-        /// <param name="name">The name of the directive.</param>
-        /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
-        public void AddDirective(string name, Action<CspDirectiveBuilder> configureDirective)
+	    /// <summary>
+	    /// The default hash algorithms used when generating hashes for the content security policy.
+	    /// The default is <see cref="HashAlgorithms.SHA384"/>.
+	    /// </summary>
+	    public HashAlgorithms DefaultHashAlgorithms
+	    {
+		    get => _defaultHashAlgorithms.GetValueOrDefault(HashAlgorithms.SHA384);
+		    set => _defaultHashAlgorithms = value;
+	    }
+
+	    /// <summary>
+	    /// Adds a new policy directive.
+	    /// </summary>
+	    /// <param name="name">The name of the directive.</param>
+	    /// <param name="configureDirective">A delegate which can use a directive builder to build a directive.</param>
+	    public void AddDirective(string name, Action<CspDirectiveBuilder> configureDirective)
         {
             if (name == null)
             {
@@ -172,10 +184,18 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
                 throw new ArgumentNullException(nameof(policy));
             }
 
-            ReportOnly = policy.ReportOnly;
-            DefaultHashAlgorithms = policy.DefaultHashAlgorithms;
+			// Ensures appends/overrides only get applied when the backing fields have been explicitly set. 
+			if (policy._reportOnly.HasValue)
+	        {
+		        ReportOnly = policy.ReportOnly;
+	        }
 
-            foreach (var directive in policy.Directives)
+	        if (policy._defaultHashAlgorithms.HasValue)
+	        {
+		        DefaultHashAlgorithms = policy.DefaultHashAlgorithms;
+	        }
+
+	        foreach (var directive in policy.Directives)
             {
 	            if (overrideDirectives)
 	            {
