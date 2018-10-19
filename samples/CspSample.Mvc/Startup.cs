@@ -41,6 +41,7 @@ namespace CspSample.Mvc
                         src.AllowHost("http://*.example.com");
                     })
                     .ReportOnly()
+                    .DefaultHashAlgorithms(HashAlgorithms.SHA384 | HashAlgorithms.SHA512)
                 );
 
                 options.AddPolicy("Policy2", policy =>

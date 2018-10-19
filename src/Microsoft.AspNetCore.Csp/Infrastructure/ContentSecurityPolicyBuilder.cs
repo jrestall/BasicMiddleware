@@ -210,6 +210,18 @@ namespace Microsoft.AspNetCore.Csp.Infrastructure
             return this;
         }
 
+        /// <summary>
+        /// Sets the default hash algorithms used when generating hashes for the <see cref="ContentSecurityPolicy"/>.
+        /// The default is <see cref="HashAlgorithms.SHA384"/>.
+        /// </summary>
+        /// <param name="hashAlgorithms">The hash algorithms.</param>
+        /// <returns>The current policy builder.</returns>
+        public ContentSecurityPolicyBuilder DefaultHashAlgorithms(HashAlgorithms hashAlgorithms)
+        {
+            _policy.DefaultHashAlgorithms = hashAlgorithms;
+            return this;
+        }
+
 	    /// <summary>
 	    /// Adds a directive to the <see cref="ContentSecurityPolicy"/>.
 	    /// </summary>
